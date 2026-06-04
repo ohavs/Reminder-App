@@ -26,6 +26,8 @@ export function CalendarScreen({ reminders, onOpen, onToggle }: CalendarScreenPr
   const cells: (number | null)[] = [];
   for (let i = 0; i < firstDayDow; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  // Fill trailing cells so every row is complete (consistent height)
+  while (cells.length % 7 !== 0) cells.push(null);
 
   const prevMonth = () => {
     if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
@@ -71,43 +73,45 @@ export function CalendarScreen({ reminders, onOpen, onToggle }: CalendarScreenPr
         </div>
 
         {/* Calendar grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', rowGap: 2, columnGap: 4 }}>
           {cells.map((d, idx) => {
-            if (d === null) return <div key={`e${idx}`} />;
+            if (d === null) return <div key={`e${idx}`} style={{ height: 46 }} />;
             const isSel = d === sel;
             const isToday = isCurrentMonth && d === today.getDate();
             const count = CAL_REMINDERS[d] || 0;
             return (
-              <button
+              <div
                 key={d}
-                onClick={() => setSel(d)}
-                style={{
-                  aspectRatio: '1', borderRadius: 'var(--r-sm)', border: 'none',
-                  cursor: 'pointer', display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center', padding: 0,
-                  background: isSel ? 'var(--md-primary)' : 'transparent',
-                  color: isSel ? 'var(--md-on-primary)' : isToday ? 'var(--md-primary)' : 'var(--md-on-surface)',
-                  transition: 'all 0.25s var(--ease-spring)',
-                  boxShadow: isSel ? 'var(--sh-1)' : 'none',
-                  WebkitTapHighlightColor: 'transparent',
-                  position: 'relative',
-                }}
+                style={{ height: 46, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3 }}
               >
-                <span style={{
-                  font: `${isToday || isSel ? 800 : 600} 15px var(--font-body)`,
-                  fontVariantNumeric: 'tabular-nums', lineHeight: 1,
-                }}>
-                  {d}
-                </span>
+                <button
+                  onClick={() => setSel(d)}
+                  style={{
+                    width: 36, height: 36, flexShrink: 0,
+                    borderRadius: isSel ? 'var(--r-sm)' : '50%',
+                    border: isToday && !isSel ? '2px solid var(--md-primary)' : 'none',
+                    cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0,
+                    background: isSel ? 'var(--md-primary)' : isToday ? 'var(--md-primary-container)' : 'transparent',
+                    color: isSel ? 'var(--md-on-primary)' : isToday ? 'var(--md-on-primary-container)' : 'var(--md-on-surface)',
+                    transition: 'all 0.25s var(--ease-spring)',
+                    boxShadow: isSel ? 'var(--sh-1)' : 'none',
+                    WebkitTapHighlightColor: 'transparent',
+                  }}
+                >
+                  <span style={{
+                    font: `${isToday || isSel ? 800 : 500} 14px var(--font-body)`,
+                    fontVariantNumeric: 'tabular-nums', lineHeight: 1,
+                  }}>
+                    {d}
+                  </span>
+                </button>
                 {count > 0 && (
                   <span style={{
-                    marginTop: 3,
-                    width: 5, height: 5, borderRadius: '50%',
-                    background: isSel ? 'var(--md-on-primary)' : 'var(--md-tertiary)',
-                    display: 'block', flexShrink: 0,
+                    width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
+                    background: isSel ? 'var(--md-primary)' : 'var(--md-tertiary)',
                   }} />
                 )}
-              </button>
+              </div>
             );
           })}
         </div>
