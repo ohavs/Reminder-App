@@ -10,6 +10,7 @@ import {
   deleteReminder as fbDelete,
 } from './firebase/reminders';
 import { BottomBar } from './components/BottomBar';
+import { SideBar } from './components/SideBar';
 import { DetailSheet } from './components/DetailSheet';
 import { ColorSheet } from './components/ColorSheet';
 import { Toast } from './components/Toast';
@@ -34,7 +35,6 @@ export function App() {
 
   useEffect(() => { setNavKey((k) => k + 1); }, [tab]);
 
-  // Subscribe to Firestore reminders when user is ready
   useEffect(() => {
     if (!user) return;
     return subscribeToReminders(user.uid, setReminders);
@@ -70,20 +70,18 @@ export function App() {
 
   if (authState === 'loading') {
     return (
-      <div id="stage">
-        <div className="ultra-shell" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span className="msym" style={{ fontSize: 48, color: 'var(--md-primary)', animation: 'fab-pulse 1.5s ease-in-out infinite' }}>
-            notifications
-          </span>
-        </div>
+      <div className="app-shell" style={{ alignItems: 'center', justifyContent: 'center' }}>
+        <span className="msym" style={{ fontSize: 52, color: 'var(--md-primary)', animation: 'fab-pulse 1.5s ease-in-out infinite' }}>
+          notifications
+        </span>
       </div>
     );
   }
 
   if (authState === 'signed-out') {
     return (
-      <div id="stage">
-        <div className="ultra-shell">
+      <div className="app-shell" style={{ alignItems: 'stretch', justifyContent: 'center' }}>
+        <div style={{ width: '100%', maxWidth: 440, margin: '0 auto', height: '100%' }}>
           <LoginScreen />
         </div>
       </div>
@@ -92,8 +90,8 @@ export function App() {
 
   if (!onboarded) {
     return (
-      <div id="stage">
-        <div className="ultra-shell">
+      <div className="app-shell" style={{ alignItems: 'stretch', justifyContent: 'center' }}>
+        <div style={{ width: '100%', maxWidth: 520, margin: '0 auto', height: '100%' }}>
           <OnboardingScreen onDone={() => { localStorage.setItem('ultra-onb', '1'); setOnboarded(true); }} />
         </div>
       </div>
@@ -101,12 +99,15 @@ export function App() {
   }
 
   return (
-    <div id="stage">
-      <div className="ultra-shell">
-        {/* Main scrollable content */}
+    <div className="app-shell">
+      {/* Sidebar — desktop only (CSS hides on mobile) */}
+      <SideBar active={tab} onNav={setTab} onAdd={() => setAdding(true)} />
+
+      {/* Main content */}
+      <div className="app-content">
         <div
           className="scroll-area"
-          style={{ position: 'absolute', inset: 0, bottom: 0, paddingBottom: 104, overflowY: 'auto', overflowX: 'hidden' }}
+          style={{ position: 'absolute', inset: 0, overflowY: 'auto', overflowX: 'hidden' }}
         >
           <div key={navKey} className="screen-enter">
             {tab === 'home' && (
@@ -137,7 +138,10 @@ export function App() {
           </div>
         </div>
 
-        <BottomBar active={tab} onNav={setTab} onAdd={() => setAdding(true)} />
+        {/* Bottom bar — mobile only (CSS hides on desktop) */}
+        <div className="app-bottom-bar">
+          <BottomBar active={tab} onNav={setTab} onAdd={() => setAdding(true)} />
+        </div>
 
         {/* Add reminder overlay */}
         <div style={{
@@ -150,20 +154,8 @@ export function App() {
           {adding && <AddScreen onClose={() => setAdding(false)} onSave={addReminder} />}
         </div>
 
-        <DetailSheet
-          reminder={detail}
-          onClose={() => setDetail(null)}
-          onToggle={toggle}
-          onDelete={del}
-        />
-
-        <ColorSheet
-          open={colorOpen}
-          onClose={() => setColorOpen(false)}
-          seed={seed}
-          setSeed={setSeed}
-        />
-
+        <DetailSheet reminder={detail} onClose={() => setDetail(null)} onToggle={toggle} onDelete={del} />
+        <ColorSheet open={colorOpen} onClose={() => setColorOpen(false)} seed={seed} setSeed={setSeed} />
         {toast && <Toast message={toast} />}
       </div>
     </div>

@@ -1,5 +1,5 @@
 /* ============================================================
-   ULTRA · Global styles — fonts, animations, CSS reset
+   ULTRA · Global styles
    ============================================================ */
 
 :root {
@@ -18,6 +18,7 @@
   --sh-2: 0 2px 6px rgba(70,45,20,.06), 0 14px 34px -12px rgba(70,45,20,.22);
   --sh-3: 0 4px 10px rgba(70,45,20,.08), 0 26px 60px -16px rgba(70,45,20,.30);
   --clay-hi: inset 0 2px 3px rgba(255,255,255,.55);
+  --sidebar-w: 260px;
 }
 
 [data-dark="true"] {
@@ -34,47 +35,73 @@
 }
 
 html, body, #root {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  height: 100dvh;
+  margin: 0; padding: 0;
+  height: 100%; height: 100dvh;
 }
 
 body {
-  background: #0c0c0e;
+  background: var(--md-surface, #fafafa);
   font-family: var(--font-body);
   overflow: hidden;
 }
 
-/* Ambient backdrop */
-#stage {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background:
-    radial-gradient(60% 50% at 30% 20%, color-mix(in oklab, var(--md-primary, #B5651D) 30%, #15151a), #0c0c0e 70%),
-    radial-gradient(50% 50% at 80% 90%, color-mix(in oklab, var(--md-tertiary, #B5651D) 25%, #15151a), #0c0c0e 70%);
-  transition: background 0.6s ease;
-}
-
-/* Phone shell */
-.ultra-shell {
-  position: relative;
-  width: min(440px, 100vw);
+/* ── App Shell ── */
+.app-shell {
+  width: 100%;
   height: 100dvh;
-  background: var(--md-surface, #fff);
+  display: flex;
+  flex-direction: row-reverse; /* sidebar on right for RTL */
+  background: var(--md-surface, #fafafa);
   color: var(--md-on-surface, #111);
+  position: relative;
   overflow: hidden;
-  border-radius: 0;
   transition: background 0.4s var(--ease), color 0.4s var(--ease);
 }
 
-@media (min-width: 480px) {
-  .ultra-shell {
-    border-radius: 34px;
-    box-shadow: 0 40px 90px -30px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.05);
-    height: min(940px, 96dvh);
+.app-content {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Sidebar (desktop only) ── */
+.app-sidebar {
+  display: none;
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  height: 100%;
+  border-inline-start: 1px solid var(--md-outline-variant, #e0e0e0);
+  background: var(--md-surface-container-low, #f5f5f5);
+  flex-direction: column;
+  padding: 20px 12px 24px;
+  transition: background 0.4s var(--ease);
+}
+
+/* ── Bottom bar (mobile only) ── */
+.app-bottom-bar {
+  display: block;
+}
+
+/* ── Responsive ── */
+@media (min-width: 768px) {
+  .app-sidebar    { display: flex; }
+  .app-bottom-bar { display: none; }
+
+  .screen-pad {
+    padding: 28px 40px 60px;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+}
+
+@media (min-width: 1200px) {
+  :root { --sidebar-w: 280px; }
+
+  .screen-pad {
+    max-width: 960px;
+    padding: 32px 48px 60px;
   }
 }
 
@@ -106,9 +133,7 @@ body {
   pointer-events: none;
   animation: ripple 0.55s var(--ease);
 }
-@keyframes ripple {
-  to { transform: scale(1); opacity: 0; }
-}
+@keyframes ripple { to { transform: scale(1); opacity: 0; } }
 
 .pressable { transition: transform 0.12s var(--ease); }
 .pressable:active { transform: scale(0.985); }
@@ -119,7 +144,7 @@ body {
 .scroll-area { scrollbar-width: none; }
 .hide-scroll { scrollbar-width: none; }
 
-/* Entrance animations */
+/* Screen enter */
 @media (prefers-reduced-motion: no-preference) {
   .screen-enter {
     animation: screenEnter 0.38s var(--ease) both;
@@ -214,8 +239,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 /* Hue slider */
 .hue-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 28px;
-  height: 28px;
+  width: 28px; height: 28px;
   border-radius: 50%;
   background: #fff;
   border: 3px solid rgba(0,0,0,.15);
@@ -223,7 +247,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   box-shadow: 0 2px 6px rgba(0,0,0,.3);
 }
 
-/* Screen pad */
+/* Screen pad — mobile default */
 .screen-pad {
   padding: 16px 20px 120px;
   min-height: 100%;
