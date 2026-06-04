@@ -1,120 +1,178 @@
 import { useState } from 'react';
 import { signInWithGoogle, signInAnon } from '../firebase/auth';
 import { ClayBell } from '../components/illustrations/ClayBell';
+import { ClayPin } from '../components/illustrations/ClayPin';
+import { ClayCheck } from '../components/illustrations/ClayCheck';
 import { Button } from '../components/ui/Button';
 
-export function LoginScreen() {
+const FEATURES = [
+  { illo: 'bell' as const, title: 'לעולם לא תשכח', body: 'תזכורות חכמות לפי שעה, חזרתיות ועדיפות.' },
+  { illo: 'pin'  as const, title: 'לפי מיקום',     body: 'Geofence — קבל תזכורת בהגעה או יציאה ממקום.' },
+  { illo: 'check' as const, title: 'פרטיות מלאה',  body: 'הנתונים שלך מוגנים בענן ומוצפנים.' },
+];
+
+function LoginForm() {
   const [loading, setLoading] = useState<'google' | 'anon' | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError]     = useState<string | null>(null);
 
   const handleGoogle = async () => {
-    setError(null);
-    setLoading('google');
-    try {
-      await signInWithGoogle();
-    } catch {
-      setError('ההתחברות נכשלה. נסה שוב.');
-      setLoading(null);
-    }
+    setError(null); setLoading('google');
+    try { await signInWithGoogle(); }
+    catch { setError('ההתחברות נכשלה. נסה שוב.'); setLoading(null); }
   };
 
   const handleAnon = async () => {
-    setError(null);
-    setLoading('anon');
-    try {
-      await signInAnon();
-    } catch {
-      setError('אירעה שגיאה. נסה שוב.');
-      setLoading(null);
-    }
+    setError(null); setLoading('anon');
+    try { await signInAnon(); }
+    catch { setError('אירעה שגיאה. נסה שוב.'); setLoading(null); }
   };
 
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'center',
-      justifyContent: 'center', height: '100%', padding: '40px 28px',
-      background: 'radial-gradient(ellipse 90% 60% at 50% 20%, var(--md-primary-container), transparent)',
-    }}>
-      {/* Logo area */}
-      <div style={{ marginBottom: 8, animation: 'onb-illo 0.7s var(--ease-spring) both' }}>
-        <ClayBell size={110} />
-      </div>
-      <div style={{
-        font: '900 32px var(--font-display)', color: 'var(--md-on-surface)',
-        letterSpacing: '-0.5px', marginBottom: 6,
-        animation: 'reveal 0.5s 0.2s both',
-      }}>
-        ULTRA
-      </div>
-      <div style={{
-        font: '600 17px var(--font-body)', color: 'var(--md-on-surface-variant)',
-        marginBottom: 52,
-        animation: 'reveal 0.5s 0.3s both',
-      }}>
-        תזכורות חכמות
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+      <button
+        onClick={handleGoogle}
+        disabled={loading !== null}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+          width: '100%', height: 54, borderRadius: 'var(--r-xl)',
+          background: 'var(--md-surface-container-high)',
+          border: '1.5px solid var(--md-outline-variant)',
+          cursor: loading !== null ? 'not-allowed' : 'pointer',
+          font: '700 16px var(--font-body)', color: 'var(--md-on-surface)',
+          opacity: loading !== null ? 0.6 : 1,
+          boxShadow: 'var(--sh-1)',
+          marginBottom: 12,
+        }}
+      >
+        {loading === 'google'
+          ? <span className="msym" style={{ fontSize: 22, color: 'var(--md-primary)', animation: 'fab-pulse 1s infinite' }}>refresh</span>
+          : <GoogleIcon />}
+        {loading === 'google' ? 'מתחבר...' : 'המשך עם Google'}
+      </button>
 
-      {/* Buttons */}
-      <div style={{
-        width: '100%', display: 'flex', flexDirection: 'column', gap: 14,
-        animation: 'reveal 0.5s 0.4s both',
-      }}>
-        <button
-          onClick={handleGoogle}
-          disabled={loading !== null}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
-            width: '100%', height: 54, borderRadius: 'var(--r-xl)',
-            background: 'var(--md-surface-container-high)',
-            border: '1.5px solid var(--md-outline-variant)',
-            cursor: loading !== null ? 'not-allowed' : 'pointer',
-            font: '700 16px var(--font-body)', color: 'var(--md-on-surface)',
-            transition: 'opacity 0.2s',
-            opacity: loading !== null ? 0.6 : 1,
-            boxShadow: 'var(--sh-1)',
-          }}
-        >
-          {loading === 'google' ? (
-            <span className="msym" style={{ fontSize: 22, color: 'var(--md-primary)', animation: 'fab-pulse 1s infinite' }}>refresh</span>
-          ) : (
-            <GoogleIcon />
-          )}
-          {loading === 'google' ? 'מתחבר...' : 'המשך עם Google'}
-        </button>
-
-        <Button
-          variant="tonal"
-          full
-          icon="person_outline"
-          onClick={handleAnon}
-          disabled={loading !== null}
-          style={{ opacity: loading !== null ? 0.6 : 1 }}
-        >
-          {loading === 'anon' ? 'מתחבר...' : 'כניסה כאורח'}
-        </Button>
-      </div>
+      <Button variant="tonal" full icon="person_outline" onClick={handleAnon}
+        disabled={loading !== null} style={{ opacity: loading !== null ? 0.6 : 1 }}>
+        {loading === 'anon' ? 'מתחבר...' : 'כניסה כאורח'}
+      </Button>
 
       {error && (
         <div style={{
-          marginTop: 20, padding: '12px 18px', borderRadius: 'var(--r-lg)',
+          marginTop: 16, padding: '12px 16px', borderRadius: 'var(--r-lg)',
           background: 'var(--md-error-container)', color: 'var(--md-on-error-container)',
           font: '600 14px var(--font-body)', textAlign: 'center',
-          animation: 'reveal 0.3s both',
         }}>
           {error}
         </div>
       )}
 
       <div style={{
-        marginTop: 'auto', paddingTop: 32,
-        font: '500 12px var(--font-body)', color: 'var(--md-on-surface-variant)',
-        textAlign: 'center', lineHeight: 1.6,
-        animation: 'reveal 0.5s 0.5s both',
+        marginTop: 20, font: '500 12px var(--font-body)',
+        color: 'var(--md-on-surface-variant)', textAlign: 'center', lineHeight: 1.6,
       }}>
-        בהתחברות אתה מסכים לתנאי השימוש.
-        <br />הנתונים שמורים בענן ומוגנים.
+        בהתחברות אתה מסכים לתנאי השימוש. הנתונים שמורים בענן ומוגנים.
       </div>
     </div>
+  );
+}
+
+/* ── Mobile layout ── */
+function MobileLogin() {
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      justifyContent: 'center', height: '100%', padding: '40px 28px',
+      background: 'radial-gradient(ellipse 90% 60% at 50% 20%, var(--md-primary-container), transparent)',
+    }}>
+      <div style={{ marginBottom: 8, animation: 'onb-illo 0.7s var(--ease-spring) both' }}>
+        <ClayBell size={110} />
+      </div>
+      <div style={{ font: '900 32px var(--font-display)', color: 'var(--md-on-surface)', letterSpacing: '-0.5px', marginBottom: 6, animation: 'reveal 0.5s 0.2s both' }}>
+        ULTRA
+      </div>
+      <div style={{ font: '600 17px var(--font-body)', color: 'var(--md-on-surface-variant)', marginBottom: 44, animation: 'reveal 0.5s 0.3s both' }}>
+        תזכורות חכמות
+      </div>
+      <div style={{ width: '100%', animation: 'reveal 0.5s 0.4s both' }}>
+        <LoginForm />
+      </div>
+    </div>
+  );
+}
+
+/* ── Desktop layout ── */
+function DesktopLogin() {
+  return (
+    <div style={{ display: 'flex', height: '100%', width: '100%' }}>
+      {/* Left panel — branding */}
+      <div style={{
+        flex: 1, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '48px 56px',
+        background: 'radial-gradient(130% 120% at 60% 30%, var(--md-primary-container), var(--md-surface-container-low))',
+        gap: 40,
+      }}>
+        <div style={{ textAlign: 'center', animation: 'onb-illo 0.7s var(--ease-spring) both' }}>
+          <ClayBell size={140} />
+          <div style={{ font: '900 44px var(--font-display)', color: 'var(--md-on-surface)', letterSpacing: '-1px', marginTop: 16, lineHeight: 1 }}>
+            ULTRA
+          </div>
+          <div style={{ font: '600 18px var(--font-body)', color: 'var(--md-on-surface-variant)', marginTop: 6 }}>
+            תזכורות חכמות
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, width: '100%', maxWidth: 360, animation: 'reveal 0.5s 0.3s both' }}>
+          {FEATURES.map((f, idx) => (
+            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{
+                width: 52, height: 52, borderRadius: 'var(--r-md)', flexShrink: 0,
+                background: 'var(--md-surface-container)',
+                display: 'grid', placeItems: 'center',
+                boxShadow: 'var(--sh-1)',
+              }}>
+                {f.illo === 'bell'  && <ClayBell size={36} />}
+                {f.illo === 'pin'   && <ClayPin size={32} />}
+                {f.illo === 'check' && <ClayCheck size={32} />}
+              </div>
+              <div>
+                <div style={{ font: '700 15px var(--font-body)', color: 'var(--md-on-surface)' }}>{f.title}</div>
+                <div style={{ font: '500 13px var(--font-body)', color: 'var(--md-on-surface-variant)', marginTop: 2 }}>{f.body}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Right panel — login form */}
+      <div style={{
+        width: 420, flexShrink: 0, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '48px 40px',
+        background: 'var(--md-surface)',
+        borderInlineStart: '1px solid var(--md-outline-variant)',
+      }}>
+        <div style={{ width: '100%', maxWidth: 340, animation: 'reveal 0.5s 0.2s both' }}>
+          <div style={{ font: '800 26px var(--font-display)', color: 'var(--md-on-surface)', marginBottom: 6 }}>
+            ברוך הבא
+          </div>
+          <div style={{ font: '500 15px var(--font-body)', color: 'var(--md-on-surface-variant)', marginBottom: 32 }}>
+            התחבר כדי לסנכרן את התזכורות שלך בכל המכשירים
+          </div>
+          <LoginForm />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function LoginScreen() {
+  return (
+    <>
+      {/* Mobile */}
+      <div className="login-mobile"><MobileLogin /></div>
+      {/* Desktop */}
+      <div className="login-desktop"><DesktopLogin /></div>
+    </>
   );
 }
 

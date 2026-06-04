@@ -50,7 +50,7 @@ body {
   width: 100%;
   height: 100dvh;
   display: flex;
-  flex-direction: row-reverse; /* sidebar on right for RTL */
+  flex-direction: row; /* RTL: row flows right→left, so first child is on the right */
   background: var(--md-surface, #fafafa);
   color: var(--md-on-surface, #111);
   position: relative;
@@ -72,7 +72,7 @@ body {
   width: var(--sidebar-w);
   flex-shrink: 0;
   height: 100%;
-  border-inline-start: 1px solid var(--md-outline-variant, #e0e0e0);
+  border-inline-end: 1px solid var(--md-outline-variant, #e0e0e0);
   background: var(--md-surface-container-low, #f5f5f5);
   flex-direction: column;
   padding: 20px 12px 24px;
@@ -251,4 +251,30 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 .screen-pad {
   padding: 16px 20px 120px;
   min-height: 100%;
+}
+
+/* Login / Onboarding responsive */
+.login-mobile   { display: flex; height: 100%; }
+.login-desktop  { display: none; height: 100%; }
+
+.onb-desktop-wrap { height: 100%; }
+
+@media (min-width: 768px) {
+  .login-mobile  { display: none; }
+  .login-desktop { display: flex; width: 100%; }
+
+  .onb-desktop-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(100% 80% at 50% 0%, var(--md-primary-container), var(--md-surface));
+  }
+  .onb-desktop-inner {
+    width: 100%;
+    max-width: 600px;
+    background: var(--md-surface);
+    border-radius: var(--r-xl);
+    box-shadow: var(--sh-3);
+    overflow: hidden;
+  }
 }

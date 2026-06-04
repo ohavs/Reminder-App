@@ -80,8 +80,8 @@ export function App() {
 
   if (authState === 'signed-out') {
     return (
-      <div className="app-shell" style={{ alignItems: 'stretch', justifyContent: 'center' }}>
-        <div style={{ width: '100%', maxWidth: 440, margin: '0 auto', height: '100%' }}>
+      <div className="app-shell" style={{ overflow: 'auto' }}>
+        <div style={{ width: '100%', height: '100%' }}>
           <LoginScreen />
         </div>
       </div>
@@ -90,8 +90,8 @@ export function App() {
 
   if (!onboarded) {
     return (
-      <div className="app-shell" style={{ alignItems: 'stretch', justifyContent: 'center' }}>
-        <div style={{ width: '100%', maxWidth: 520, margin: '0 auto', height: '100%' }}>
+      <div className="app-shell" style={{ overflow: 'auto' }}>
+        <div style={{ width: '100%', height: '100%' }}>
           <OnboardingScreen onDone={() => { localStorage.setItem('ultra-onb', '1'); setOnboarded(true); }} />
         </div>
       </div>

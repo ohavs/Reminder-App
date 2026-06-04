@@ -32,8 +32,10 @@ export function OnboardingScreen({ onDone }: OnboardingScreenProps) {
   const last = i === SLIDES.length - 1;
 
   return (
+    <div className="onb-desktop-wrap">
+    <div className="onb-desktop-inner">
     <div style={{
-      height: '100%', display: 'flex', flexDirection: 'column',
+      display: 'flex', flexDirection: 'column',
       padding: '22px 26px 30px', position: 'relative',
     }}>
       <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
@@ -110,6 +112,8 @@ export function OnboardingScreen({ onDone }: OnboardingScreenProps) {
           {last ? 'בוא נתחיל' : 'הבא'}
         </Button>
       </div>
+    </div>
+    </div>
     </div>
   );
 }
