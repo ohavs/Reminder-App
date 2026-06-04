@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
 import type { Reminder, NavTab, ThemeMode } from './types';
-import { INITIAL_REMINDERS } from './data/sampleData';
 import { useDynamicColor } from './hooks/useDynamicColor';
+import { useAuth } from './hooks/useAuth';
+import {
+  subscribeToReminders,
+  addReminder as fbAddReminder,
+  toggleReminder as fbToggle,
+  deleteReminder as fbDelete,
+} from './firebase/reminders';
 import { BottomBar } from './components/BottomBar';
 import { DetailSheet } from './components/DetailSheet';
 import { ColorSheet } from './components/ColorSheet';
@@ -15,46 +21,64 @@ import { ProfileScreen } from './screens/ProfileScreen';
 
 export function App() {
   const { seed, setSeed, mode, setMode } = useDynamicColor();
+  const { user, ready } = useAuth();
   const [onboarded, setOnboarded] = useState(() => localStorage.getItem('ultra-onb') === '1');
   const [tab, setTab] = useState<NavTab>('home');
   const [adding, setAdding] = useState(false);
   const [detail, setDetail] = useState<Reminder | null>(null);
   const [colorOpen, setColorOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [reminders, setReminders] = useState<Reminder[]>(INITIAL_REMINDERS);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
   const [navKey, setNavKey] = useState(0);
 
   useEffect(() => { setNavKey((k) => k + 1); }, [tab]);
+
+  // Subscribe to Firestore reminders when user is ready
+  useEffect(() => {
+    if (!user) return;
+    return subscribeToReminders(user.uid, setReminders);
+  }, [user?.uid]);
 
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2200);
   };
 
-  const toggle = (id: string) => {
-    setReminders((rs) =>
-      rs.map((r) => {
-        if (r.id !== id) return r;
-        const done = !r.done;
-        if (done) showToast('המשימה הושלמה! 🎉');
-        return {
-          ...r, done,
-          doneAt: done
-            ? new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
-            : undefined,
-        };
-      })
-    );
+  const toggle = async (id: string) => {
+    if (!user) return;
+    const r = reminders.find((r) => r.id === id);
+    if (!r) return;
+    const done = !r.done;
+    if (done) showToast('המשימה הושלמה! 🎉');
+    await fbToggle(user.uid, id, done);
   };
 
-  const del = (id: string) => setReminders((rs) => rs.filter((r) => r.id !== id));
+  const del = async (id: string) => {
+    if (!user) return;
+    setDetail(null);
+    await fbDelete(user.uid, id);
+  };
 
-  const addReminder = (data: Omit<Reminder, 'id' | 'done' | 'doneAt'>) => {
-    setReminders((rs) => [{ id: 'n' + Date.now(), done: false, ...data }, ...rs]);
+  const addReminder = async (data: Omit<Reminder, 'id' | 'done' | 'doneAt'>) => {
+    if (!user) return;
     setAdding(false);
     setTab('home');
+    await fbAddReminder(user.uid, data);
     showToast('התזכורת נוספה ✨');
   };
+
+  // Splash while Firebase initializes
+  if (!ready) {
+    return (
+      <div id="stage">
+        <div className="ultra-shell" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span className="msym" style={{ fontSize: 48, color: 'var(--md-primary)', animation: 'fab-pulse 1.5s ease-in-out infinite' }}>
+            notifications
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   if (!onboarded) {
     return (
@@ -80,7 +104,7 @@ export function App() {
                 reminders={reminders}
                 onToggle={toggle}
                 onOpen={setDetail}
-                name="נועם"
+                name={user?.displayName || 'שלום'}
                 onOpenColor={() => setColorOpen(true)}
                 mode={mode}
                 setMode={setMode}
@@ -134,5 +158,4 @@ export function App() {
   );
 }
 
-// Helper to cast mode type safely
 export type { ThemeMode };
