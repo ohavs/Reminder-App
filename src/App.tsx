@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Reminder, NavTab, ThemeMode } from './types';
 import { useDynamicColor } from './hooks/useDynamicColor';
 import { useAuth } from './hooks/useAuth';
+import { LoginScreen } from './screens/LoginScreen';
 import {
   subscribeToReminders,
   addReminder as fbAddReminder,
@@ -21,7 +22,7 @@ import { ProfileScreen } from './screens/ProfileScreen';
 
 export function App() {
   const { seed, setSeed, mode, setMode } = useDynamicColor();
-  const { user, ready } = useAuth();
+  const { user, authState } = useAuth();
   const [onboarded, setOnboarded] = useState(() => localStorage.getItem('ultra-onb') === '1');
   const [tab, setTab] = useState<NavTab>('home');
   const [adding, setAdding] = useState(false);
@@ -67,14 +68,23 @@ export function App() {
     showToast('התזכורת נוספה ✨');
   };
 
-  // Splash while Firebase initializes
-  if (!ready) {
+  if (authState === 'loading') {
     return (
       <div id="stage">
         <div className="ultra-shell" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <span className="msym" style={{ fontSize: 48, color: 'var(--md-primary)', animation: 'fab-pulse 1.5s ease-in-out infinite' }}>
             notifications
           </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (authState === 'signed-out') {
+    return (
+      <div id="stage">
+        <div className="ultra-shell">
+          <LoginScreen />
         </div>
       </div>
     );
@@ -120,6 +130,8 @@ export function App() {
                 setMode={setMode}
                 onOpenColor={() => setColorOpen(true)}
                 seed={seed}
+                user={user}
+                completedCount={reminders.filter((r) => r.done).length}
               />
             )}
           </div>

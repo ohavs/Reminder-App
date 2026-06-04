@@ -2,6 +2,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInAnonymously,
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut as fbSignOut,
   onAuthStateChanged,
   updateProfile,
@@ -10,20 +12,28 @@ import {
 import { auth } from './config';
 import { getOrCreateProfile } from './userProfile';
 
-// Subscribe to auth state — call this once at app root
+const googleProvider = new GoogleAuthProvider();
+
 export function onAuth(callback: (user: User | null) => void): () => void {
   return onAuthStateChanged(auth, callback);
 }
 
-// Anonymous sign-in (works immediately, no email needed)
-// Good for first launch before user creates an account
-export async function signInAnon(): Promise<User> {
-  const { user } = await signInAnonymously(auth);
-  await getOrCreateProfile(user.uid, '', 'אנונימי');
+export async function signInWithGoogle(): Promise<User> {
+  const { user } = await signInWithPopup(auth, googleProvider);
+  await getOrCreateProfile(
+    user.uid,
+    user.email ?? '',
+    user.displayName ?? 'משתמש',
+  );
   return user;
 }
 
-// Email / password registration
+export async function signInAnon(): Promise<User> {
+  const { user } = await signInAnonymously(auth);
+  await getOrCreateProfile(user.uid, '', 'אורח');
+  return user;
+}
+
 export async function registerWithEmail(
   email: string,
   password: string,
@@ -35,7 +45,6 @@ export async function registerWithEmail(
   return user;
 }
 
-// Email / password sign-in
 export async function signInWithEmail(email: string, password: string): Promise<User> {
   const { user } = await signInWithEmailAndPassword(auth, email, password);
   return user;

@@ -2,10 +2,10 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import type { ThemeMode } from '../types';
 import { SEED_COLORS } from '../data/sampleData';
+import { signOut } from '../firebase/auth';
 import { Card } from '../components/ui/Card';
 import { TopBar } from '../components/ui/TopBar';
 import { SectionTitle } from '../components/ui/SectionTitle';
-import { IconButton } from '../components/ui/IconButton';
 import { Button } from '../components/ui/Button';
 import { Switch } from '../components/ui/Switch';
 import { ClayTile } from '../components/illustrations/ClayTile';
@@ -50,9 +50,11 @@ interface ProfileScreenProps {
   setMode: (m: ThemeMode) => void;
   onOpenColor: () => void;
   seed: string;
+  user: { displayName: string | null; email: string | null; photoURL: string | null } | null;
+  completedCount: number;
 }
 
-export function ProfileScreen({ mode, setMode, onOpenColor, seed }: ProfileScreenProps) {
+export function ProfileScreen({ mode, setMode, onOpenColor, seed, user, completedCount }: ProfileScreenProps) {
   const [geo, setGeo] = useState(true);
   const [analytics, setAnalytics] = useState(false);
   const [sound, setSound] = useState(true);
@@ -68,7 +70,6 @@ export function ProfileScreen({ mode, setMode, onOpenColor, seed }: ProfileScree
     <div className="screen-pad">
       <TopBar
         title={<div style={{ font: '800 24px var(--font-display)', color: 'var(--md-on-surface)' }}>פרופיל</div>}
-        actions={[<IconButton key="e" icon="edit" tone="container" />]}
       />
 
       {/* Profile header */}
@@ -77,23 +78,32 @@ export function ProfileScreen({ mode, setMode, onOpenColor, seed }: ProfileScree
         display: 'flex', alignItems: 'center', gap: 16,
         background: 'radial-gradient(120% 120% at 85% 0%, var(--md-primary-container), var(--md-surface-container))',
       }}>
-        <div style={{
-          width: 68, height: 68, borderRadius: '50%', flexShrink: 0,
-          background: 'radial-gradient(120% 120% at 30% 25%, var(--md-tertiary-container), var(--md-tertiary))',
-          display: 'grid', placeItems: 'center',
-          font: '800 26px var(--font-display)', color: 'var(--md-on-tertiary-container)',
-          boxShadow: 'inset 0 2px 5px rgba(255,255,255,.4)',
-        }}>
-          נ
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ font: '800 20px var(--font-display)', color: 'var(--md-on-surface)' }}>נועם לוי</div>
-          <div style={{ font: '500 14px var(--font-body)', color: 'var(--md-on-surface-variant)', marginTop: 2 }}>
-            noam@ultra.app
+        {user?.photoURL ? (
+          <img
+            src={user.photoURL} alt="avatar"
+            style={{ width: 68, height: 68, borderRadius: '50%', flexShrink: 0, objectFit: 'cover', boxShadow: 'var(--sh-2)' }}
+          />
+        ) : (
+          <div style={{
+            width: 68, height: 68, borderRadius: '50%', flexShrink: 0,
+            background: 'radial-gradient(120% 120% at 30% 25%, var(--md-tertiary-container), var(--md-tertiary))',
+            display: 'grid', placeItems: 'center',
+            font: '800 26px var(--font-display)', color: 'var(--md-on-tertiary-container)',
+            boxShadow: 'inset 0 2px 5px rgba(255,255,255,.4)',
+          }}>
+            {(user?.displayName ?? 'א')[0]}
+          </div>
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ font: '800 20px var(--font-display)', color: 'var(--md-on-surface)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {user?.displayName || 'אורח'}
+          </div>
+          <div style={{ font: '500 14px var(--font-body)', color: 'var(--md-on-surface-variant)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {user?.email || 'כניסה אנונימית'}
           </div>
         </div>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ font: '800 22px var(--font-display)', color: 'var(--md-primary)' }}>62</div>
+        <div style={{ textAlign: 'center', flexShrink: 0 }}>
+          <div style={{ font: '800 22px var(--font-display)', color: 'var(--md-primary)' }}>{completedCount}</div>
           <div style={{ font: '600 11px var(--font-body)', color: 'var(--md-on-surface-variant)' }}>הושלמו</div>
         </div>
       </Card>
@@ -157,10 +167,21 @@ export function ProfileScreen({ mode, setMode, onOpenColor, seed }: ProfileScree
 
       {/* Backup */}
       <SectionTitle>גיבוי</SectionTitle>
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
         <Button variant="tonal" full icon="download" style={{ flex: 1 }}>ייצוא נתונים</Button>
         <Button variant="outline" full icon="upload" style={{ flex: 1 }}>ייבוא</Button>
       </div>
+
+      {/* Sign out */}
+      <Button
+        variant="outline"
+        full
+        icon="logout"
+        onClick={() => signOut()}
+        style={{ color: 'var(--md-error)', borderColor: 'var(--md-error)', marginBottom: 16 }}
+      >
+        יציאה מהחשבון
+      </Button>
     </div>
   );
 }
