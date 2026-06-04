@@ -1,4 +1,5 @@
 import type { ToneName } from '../../types';
+import { Icon } from '../ui/Icon';
 
 interface ClayTileProps {
   icon: string;
@@ -30,7 +31,7 @@ export function ClayTile({ icon, tone = 'primary', size = 56 }: ClayTileProps) {
       display: 'grid', placeItems: 'center', flexShrink: 0,
       boxShadow: `inset 0 2px 4px rgba(255,255,255,.45), 0 4px 10px -4px ${fg}`,
     }}>
-      <span className="msym" style={{ color: fg, fontSize: size * 0.46 }}>{icon}</span>
+      <Icon name={icon} size={Math.round(size * 0.46)} color={fg} />
     </div>
   );
 }

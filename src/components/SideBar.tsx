@@ -1,11 +1,12 @@
 import type { NavTab } from '../types';
 import { useRipple } from '../hooks/useRipple';
+import { Icon } from './ui/Icon';
 
 const NAV = [
-  { id: 'home'     as NavTab, icon: 'home',          label: 'בית' },
-  { id: 'calendar' as NavTab, icon: 'calendar_month', label: 'לוח שנה' },
-  { id: 'stats'    as NavTab, icon: 'bar_chart',      label: 'סטטיסטיקה' },
-  { id: 'profile'  as NavTab, icon: 'person',         label: 'פרופיל' },
+  { id: 'home'     as NavTab, icon: 'home',     label: 'בית' },
+  { id: 'calendar' as NavTab, icon: 'calendar', label: 'לוח שנה' },
+  { id: 'stats'    as NavTab, icon: 'stats',    label: 'סטטיסטיקה' },
+  { id: 'profile'  as NavTab, icon: 'user',     label: 'פרופיל' },
 ];
 
 interface SideBarProps {
@@ -31,18 +32,11 @@ function NavItem({ item, active, onNav }: { item: typeof NAV[0]; active: NavTab;
         position: 'relative', overflow: 'hidden',
       }}
     >
-      <span
-        className="msym"
-        style={{
-          fontSize: 23,
-          color: on ? 'var(--md-on-secondary-container)' : 'var(--md-on-surface-variant)',
-          fontVariationSettings: on ? "'FILL' 1, 'wght' 600" : "'FILL' 0, 'wght' 400",
-          transition: 'color 0.25s var(--ease), font-variation-settings 0.25s var(--ease)',
-          flexShrink: 0,
-        }}
-      >
-        {item.icon}
-      </span>
+      <Icon
+        name={item.icon}
+        size={22}
+        color={on ? 'var(--md-on-secondary-container)' : 'var(--md-on-surface-variant)'}
+      />
       <span style={{
         font: `${on ? 700 : 500} 15px var(--font-body)`,
         color: on ? 'var(--md-on-secondary-container)' : 'var(--md-on-surface-variant)',
@@ -58,7 +52,6 @@ export function SideBar({ active, onNav, onAdd }: SideBarProps) {
   const ripple = useRipple();
   return (
     <aside className="app-sidebar">
-      {/* Logo */}
       <div style={{ padding: '8px 12px 24px' }}>
         <div style={{ font: '900 26px var(--font-display)', color: 'var(--md-primary)', letterSpacing: '-0.5px', lineHeight: 1 }}>
           ULTRA
@@ -70,14 +63,12 @@ export function SideBar({ active, onNav, onAdd }: SideBarProps) {
 
       <div style={{ height: 1, background: 'var(--md-outline-variant)', marginBottom: 12 }} />
 
-      {/* Nav items */}
       <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
         {NAV.map((item) => (
           <NavItem key={item.id} item={item} active={active} onNav={onNav} />
         ))}
       </nav>
 
-      {/* Add button */}
       <button
         className="ripple-host pressable"
         onClick={(e) => { ripple(e); onAdd(); }}
@@ -95,7 +86,7 @@ export function SideBar({ active, onNav, onAdd }: SideBarProps) {
           WebkitTapHighlightColor: 'transparent',
         }}
       >
-        <span className="msym" style={{ fontSize: 22, fontVariationSettings: "'wght' 500" }}>add</span>
+        <Icon name="plus" size={22} color="var(--md-on-primary)" />
         תזכורת חדשה
       </button>
     </aside>

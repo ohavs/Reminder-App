@@ -1,5 +1,6 @@
 import type { MouseEvent, ReactNode } from 'react';
 import { useRipple } from '../../hooks/useRipple';
+import { Icon } from './Icon';
 
 interface ChipProps {
   selected?: boolean;
@@ -29,9 +30,7 @@ export function Chip({ selected, icon, children, onClick }: ChipProps) {
       }}
     >
       {(selected || icon) && (
-        <span className="msym" style={{ fontSize: 18, marginInlineStart: -2 }}>
-          {selected ? 'check' : icon}
-        </span>
+        <Icon name={selected ? 'check' : (icon ?? 'check')} size={16} style={{ marginInlineStart: -2 }} />
       )}
       <span style={{ display: 'inline-block' }}>{children}</span>
     </button>

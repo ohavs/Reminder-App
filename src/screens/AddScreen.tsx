@@ -7,6 +7,7 @@ import { IconButton } from '../components/ui/IconButton';
 import { Button } from '../components/ui/Button';
 import { Chip } from '../components/ui/Chip';
 import { Segmented } from '../components/ui/Segmented';
+import { Icon } from '../components/ui/Icon';
 import { ClayTile } from '../components/illustrations/ClayTile';
 import { ClayPin } from '../components/illustrations/ClayPin';
 
@@ -24,7 +25,7 @@ function FieldLabel({ icon, children }: { icon: string; children: React.ReactNod
       display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10,
       font: '700 14px var(--font-body)', color: 'var(--md-on-surface-variant)',
     }}>
-      <span className="msym" style={{ fontSize: 19, color: 'var(--md-primary)' }}>{icon}</span>
+      <Icon name={icon} size={18} color="var(--md-primary)" />
       {children}
     </div>
   );
@@ -41,11 +42,10 @@ function IconPicker({ value, onChange }: { value: string; onChange: (v: string) 
               width: 52, height: 52, flexShrink: 0, borderRadius: 'var(--r-md)', cursor: 'pointer',
               border: sel ? '2px solid var(--md-primary)' : '1.5px solid var(--md-outline-variant)',
               background: sel ? 'var(--md-primary-container)' : 'var(--md-surface-container-lowest)',
-              color: sel ? 'var(--md-on-primary-container)' : 'var(--md-on-surface-variant)',
               display: 'grid', placeItems: 'center', WebkitTapHighlightColor: 'transparent',
               transition: 'all 0.2s var(--ease-spring)',
             }}>
-            <span className="msym" style={{ fontSize: 24 }}>{ic}</span>
+            <Icon name={ic} size={24} color={sel ? 'var(--md-on-primary-container)' : 'var(--md-on-surface-variant)'} />
           </button>
         );
       })}
@@ -58,13 +58,15 @@ type NewReminder = Omit<Reminder, 'id' | 'done' | 'doneAt'>;
 interface AddScreenProps {
   onClose: () => void;
   onSave: (data: NewReminder) => void;
+  defaultDate?: string;
 }
 
-export function AddScreen({ onClose, onSave }: AddScreenProps) {
+export function AddScreen({ onClose, onSave, defaultDate }: AddScreenProps) {
   const [title, setTitle] = useState('');
-  const [icon, setIcon] = useState('notifications');
+  const [icon, setIcon] = useState('bell');
   const [kind, setKind] = useState<ReminderKind>('time');
   const [time, setTime] = useState('09:00');
+  const [dueDate, setDueDate] = useState(defaultDate ?? '');
   const [place, setPlace] = useState('');
   const [trigger, setTrigger] = useState<ReminderTrigger>('arrive');
   const [repeat, setRepeat] = useState('חד פעמי');
@@ -82,13 +84,14 @@ export function AddScreen({ onClose, onSave }: AddScreenProps) {
       sub: kind === 'place'
         ? (trigger === 'arrive' ? 'בהגעה למקום' : 'ביציאה מהמקום')
         : repeat,
+      dueDate: dueDate || undefined,
     });
   };
 
   return (
     <div className="screen-pad" style={{ paddingBottom: 120 }}>
       <TopBar
-        leading={<IconButton icon="arrow_forward" onClick={onClose} label="חזרה" />}
+        leading={<IconButton icon="x" onClick={onClose} label="סגור" />}
         title={
           <div style={{ font: '800 22px var(--font-display)', color: 'var(--md-on-surface)' }}>
             תזכורת חדשה
@@ -116,7 +119,7 @@ export function AddScreen({ onClose, onSave }: AddScreenProps) {
         </div>
 
         <div>
-          <FieldLabel icon="category">אייקון</FieldLabel>
+          <FieldLabel icon="tag">אייקון</FieldLabel>
           <IconPicker value={icon} onChange={setIcon} />
         </div>
 
@@ -126,19 +129,26 @@ export function AddScreen({ onClose, onSave }: AddScreenProps) {
             value={kind}
             onChange={(v) => setKind(v as ReminderKind)}
             options={[
-              { value: 'time',  label: 'לפי זמן',    icon: 'schedule' },
-              { value: 'place', label: 'לפי מיקום',  icon: 'location_on' },
+              { value: 'time',  label: 'לפי זמן',    icon: 'clock' },
+              { value: 'place', label: 'לפי מיקום',  icon: 'location' },
             ]}
           />
         </div>
 
         {kind === 'time' ? (
           <div className="reveal">
-            <FieldLabel icon="alarm">שעה</FieldLabel>
+            <FieldLabel icon="clock">שעה</FieldLabel>
             <input
               type="time" value={time}
               onChange={(e) => setTime(e.target.value)}
               style={{ ...fieldStyle, textAlign: 'start', fontVariantNumeric: 'tabular-nums', fontSize: 22, fontWeight: 800 }}
+            />
+            <div style={{ height: 24 }} />
+            <FieldLabel icon="calendar">תאריך (אופציונלי)</FieldLabel>
+            <input
+              type="date" value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              style={{ ...fieldStyle, fontSize: 16 }}
             />
             <div style={{ height: 24 }} />
             <FieldLabel icon="repeat">חזרתיות</FieldLabel>
@@ -150,7 +160,7 @@ export function AddScreen({ onClose, onSave }: AddScreenProps) {
           </div>
         ) : (
           <div className="reveal">
-            <FieldLabel icon="place">מיקום</FieldLabel>
+            <FieldLabel icon="map-pin">מיקום</FieldLabel>
             <input
               value={place}
               onChange={(e) => setPlace(e.target.value)}
@@ -170,8 +180,8 @@ export function AddScreen({ onClose, onSave }: AddScreenProps) {
               value={trigger}
               onChange={(v) => setTrigger(v as ReminderTrigger)}
               options={[
-                { value: 'arrive', label: 'בהגעה',  icon: 'login' },
-                { value: 'leave',  label: 'ביציאה', icon: 'logout' },
+                { value: 'arrive', label: 'בהגעה',  icon: 'navigation' },
+                { value: 'leave',  label: 'ביציאה', icon: 'log-out' },
               ]}
             />
           </div>
@@ -183,8 +193,8 @@ export function AddScreen({ onClose, onSave }: AddScreenProps) {
             value={priority}
             onChange={(v) => setPriority(v as ReminderPriority)}
             options={[
-              { value: 'urgent', label: 'דחוף', icon: 'priority_high' },
-              { value: 'normal', label: 'רגיל', icon: 'low_priority' },
+              { value: 'urgent', label: 'דחוף', icon: 'alert' },
+              { value: 'normal', label: 'רגיל', icon: 'check' },
             ]}
           />
         </div>

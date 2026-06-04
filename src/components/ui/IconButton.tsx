@@ -1,5 +1,6 @@
 import type { CSSProperties, MouseEvent } from 'react';
 import { useRipple } from '../../hooks/useRipple';
+import { Icon } from './Icon';
 
 interface IconButtonProps {
   icon: string;
@@ -29,7 +30,7 @@ export function IconButton({ icon, onClick, tone, size = 44, fontSize = 24, styl
         ...style,
       }}
     >
-      <span className="msym" style={{ fontSize }}>{icon}</span>
+      <Icon name={icon} size={fontSize} />
     </button>
   );
 }

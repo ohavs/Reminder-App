@@ -1,6 +1,7 @@
 import type { Reminder } from '../types';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
+import { Icon } from './ui/Icon';
 import { ClayTile } from './illustrations/ClayTile';
 
 interface DetailSheetProps {
@@ -74,9 +75,7 @@ export function DetailSheet({ reminder, onClose, onToggle, onDelete }: DetailShe
                   display: 'flex', alignItems: 'center', gap: 6,
                   font: '600 13px var(--font-body)', color: 'var(--md-on-surface-variant)', marginBottom: 6,
                 }}>
-                  <span className="msym" style={{ fontSize: 18, color: 'var(--md-primary)' }}>
-                    {reminder.kind === 'place' ? 'location_on' : 'schedule'}
-                  </span>
+                  <Icon name={reminder.kind === 'place' ? 'location' : 'clock'} size={17} color="var(--md-primary)" />
                   {reminder.kind === 'place' ? 'מיקום' : 'שעה'}
                 </div>
                 <div style={{ font: '800 17px var(--font-body)', color: 'var(--md-on-surface)' }}>
@@ -89,9 +88,7 @@ export function DetailSheet({ reminder, onClose, onToggle, onDelete }: DetailShe
                   display: 'flex', alignItems: 'center', gap: 6,
                   font: '600 13px var(--font-body)', color: 'var(--md-on-surface-variant)', marginBottom: 6,
                 }}>
-                  <span className="msym" style={{ fontSize: 18, color: 'var(--md-primary)' }}>
-                    {reminder.kind === 'place' ? 'tour' : 'repeat'}
-                  </span>
+                  <Icon name={reminder.kind === 'place' ? 'navigation' : 'repeat'} size={17} color="var(--md-primary)" />
                   {reminder.kind === 'place' ? 'טריגר' : 'חזרתיות'}
                 </div>
                 <div style={{ font: '800 17px var(--font-body)', color: 'var(--md-on-surface)' }}>
@@ -104,7 +101,7 @@ export function DetailSheet({ reminder, onClose, onToggle, onDelete }: DetailShe
 
             <div style={{ display: 'flex', gap: 12 }}>
               <Button
-                variant="outline" icon="delete"
+                variant="outline" icon="trash"
                 onClick={() => { onDelete(reminder.id); onClose(); }}
                 style={{ flex: '0 0 auto' }}
               />

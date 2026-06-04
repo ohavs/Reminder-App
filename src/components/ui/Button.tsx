@@ -1,5 +1,6 @@
 import type { CSSProperties, MouseEvent } from 'react';
 import { useRipple } from '../../hooks/useRipple';
+import { Icon } from './Icon';
 
 type Variant = 'filled' | 'tonal' | 'tertiary' | 'outline' | 'text';
 
@@ -41,7 +42,7 @@ export function Button({ variant = 'filled', icon, children, onClick, style, ful
         ...style,
       }}
     >
-      {icon && <span className="msym" style={{ fontSize: 20 }}>{icon}</span>}
+      {icon && <Icon name={icon} size={20} />}
       {children}
     </button>
   );

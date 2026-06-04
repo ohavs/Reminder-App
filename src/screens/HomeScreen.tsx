@@ -6,9 +6,10 @@ import { Chip } from '../components/ui/Chip';
 import { TopBar } from '../components/ui/TopBar';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { IconButton } from '../components/ui/IconButton';
+import { Icon } from '../components/ui/Icon';
 import { ClayTile } from '../components/illustrations/ClayTile';
 
-function ProgressRing({ value, size = 100, stroke = 11 }: { value: number; size?: number; stroke?: number }) {
+function ProgressRing({ value, size = 88, stroke = 10 }: { value: number; size?: number; stroke?: number }) {
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const off = c * (1 - value);
@@ -24,29 +25,10 @@ function ProgressRing({ value, size = 100, stroke = 11 }: { value: number; size?
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
         <div style={{ textAlign: 'center', lineHeight: 1 }}>
-          <div style={{ font: '800 26px var(--font-display)', color: 'var(--md-on-surface)' }}>
-            {Math.round(value * 100)}<span style={{ fontSize: 14 }}>%</span>
+          <div style={{ font: '800 22px var(--font-display)', color: 'var(--md-on-surface)' }}>
+            {Math.round(value * 100)}<span style={{ fontSize: 12 }}>%</span>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function MiniStat({ icon, tone, value, label }: { icon: string; tone: 'error' | 'tertiary'; value: number; label: string }) {
-  const isError = tone === 'error';
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <div style={{
-        width: 38, height: 38, borderRadius: 'var(--r-sm)', display: 'grid', placeItems: 'center', flexShrink: 0,
-        background: isError ? 'var(--md-error-container)' : 'var(--md-tertiary-container)',
-        color: isError ? 'var(--md-on-error-container)' : 'var(--md-on-tertiary-container)',
-      }}>
-        <span className="msym" style={{ fontSize: 21 }}>{icon}</span>
-      </div>
-      <div>
-        <div style={{ font: '800 19px var(--font-display)', color: 'var(--md-on-surface)', lineHeight: 1 }}>{value}</div>
-        <div style={{ font: '500 12px var(--font-body)', color: 'var(--md-on-surface-variant)', marginTop: 2 }}>{label}</div>
       </div>
     </div>
   );
@@ -94,9 +76,7 @@ function ReminderRow({ r, onToggle, onOpen, index }: {
             display: 'inline-flex', alignItems: 'center', gap: 4,
             font: '500 13px var(--font-body)', color: 'var(--md-on-surface-variant)',
           }}>
-            <span className="msym" style={{ fontSize: 16 }}>
-              {r.kind === 'place' ? 'location_on' : 'schedule'}
-            </span>
+            <Icon name={r.kind === 'place' ? 'location' : 'clock'} size={15} color="var(--md-on-surface-variant)" />
             {r.kind === 'place'
               ? `${r.trigger === 'arrive' ? 'בהגעה ל' : 'ביציאה מ'}${r.place}`
               : r.time}
@@ -109,7 +89,7 @@ function ReminderRow({ r, onToggle, onOpen, index }: {
             background: 'var(--md-primary-container)', color: 'var(--md-on-primary-container)',
             font: '600 12px var(--font-body)', display: 'inline-flex', alignItems: 'center', gap: 5,
           }}>
-            <span className="msym" style={{ fontSize: 15 }}>check_circle</span>
+            <Icon name="check-circle" size={14} color="var(--md-on-primary-container)" />
             {`בוצע בשעה ${r.doneAt}`}
           </div>
         )}
@@ -124,7 +104,7 @@ function ReminderRow({ r, onToggle, onOpen, index }: {
           color: 'var(--md-on-primary)', display: 'grid', placeItems: 'center',
           transition: 'all 0.25s var(--ease-spring)', WebkitTapHighlightColor: 'transparent',
         }}>
-        {r.done && <span className="msym" style={{ fontSize: 20 }}>check</span>}
+        {r.done && <Icon name="check" size={18} color="var(--md-on-primary)" />}
       </button>
     </Card>
   );
@@ -144,9 +124,9 @@ function CatHeader({ cat, count }: { cat: CategoryKey; count: number }) {
     <div style={{ display: 'flex', alignItems: 'center', gap: 9, margin: '20px 2px 12px' }}>
       <span style={{
         width: 28, height: 28, borderRadius: 'var(--r-xs)',
-        background: bg, color: fg, display: 'grid', placeItems: 'center',
+        background: bg, display: 'grid', placeItems: 'center',
       }}>
-        <span className="msym" style={{ fontSize: 17 }}>{c.icon}</span>
+        <Icon name={c.icon} size={16} color={fg} />
       </span>
       <span style={{ font: '700 16px var(--font-display)', color: 'var(--md-on-surface)' }}>{c.label}</span>
       <span style={{ font: '600 13px var(--font-body)', color: 'var(--md-on-surface-variant)' }}>{count}</span>
@@ -179,6 +159,13 @@ export function HomeScreen({ reminders, onToggle, onOpen, name, onOpenColor, mod
     .map((c) => ({ cat: c, items: shown.filter((r) => r.cat === c) }))
     .filter((g) => g.items.length > 0);
 
+  const divider = (
+    <div style={{
+      height: 1, background: 'color-mix(in oklab, var(--md-outline-variant) 45%, transparent)',
+      margin: '12px 0',
+    }} />
+  );
+
   return (
     <div className="screen-pad">
       <TopBar
@@ -194,64 +181,73 @@ export function HomeScreen({ reminders, onToggle, onOpen, name, onOpenColor, mod
         }
         actions={[
           <IconButton key="c" icon="palette" tone="container" onClick={onOpenColor} label="צבע דינמי" />,
-          <IconButton key="t" icon={mode === 'dark' ? 'light_mode' : 'dark_mode'} tone="container"
+          <IconButton key="t" icon={mode === 'dark' ? 'sun' : 'moon'} tone="container"
             onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}
             label="החלף מצב תצוגה" />,
         ]}
       />
 
-      {/* Hero */}
+      {/* Combined hero + progress card */}
       <Card tone="base" className="reveal" style={{
-        padding: 20, marginBottom: 16, position: 'relative', overflow: 'hidden',
+        padding: 18, marginBottom: 20, position: 'relative', overflow: 'hidden',
         background: 'radial-gradient(150% 130% at 90% -10%, var(--md-primary-container), var(--md-surface-container) 75%)',
         boxShadow: 'var(--sh-2)',
       }}>
         <div style={{ position: 'absolute', insetInlineStart: -30, bottom: -40, width: 120, height: 120, borderRadius: '50%', background: 'color-mix(in oklab, var(--md-tertiary) 22%, transparent)', filter: 'blur(4px)' }} />
-        <div style={{ position: 'absolute', insetInlineStart: 40, top: -20, width: 50, height: 50, borderRadius: '50%', background: 'color-mix(in oklab, var(--md-primary) 24%, transparent)' }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, position: 'relative' }}>
+
+        {/* Next reminder row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative' }}>
           <ClayTile
-            icon={next ? next.icon : 'celebration'}
+            icon={next ? next.icon : 'check-circle'}
             tone={next ? (CATEGORIES[next.cat]?.tone ?? 'primary') : 'primary'}
-            size={66}
+            size={60}
           />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ font: '600 13px var(--font-body)', color: 'var(--md-on-primary-container)', opacity: 0.9, marginBottom: 4 }}>
+            <div style={{ font: '600 12px var(--font-body)', color: 'var(--md-on-primary-container)', opacity: 0.85, marginBottom: 3 }}>
               {next ? 'התזכורת הבאה' : 'סיימת הכל להיום!'}
             </div>
-            <div style={{ font: '800 21px var(--font-display)', color: 'var(--md-on-surface)' }}>
+            <div style={{
+              font: '800 19px var(--font-display)', color: 'var(--md-on-surface)',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
               {next ? next.title : 'כל הכבוד 🎉'}
             </div>
             {next && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, font: '600 14px var(--font-body)', color: 'var(--md-on-surface-variant)' }}>
-                <span className="msym" style={{ fontSize: 17 }}>
-                  {next.kind === 'place' ? 'location_on' : 'schedule'}
-                </span>
-                {next.kind === 'place' ? next.place : `היום בשעה ${next.time}`}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, font: '500 13px var(--font-body)', color: 'var(--md-on-surface-variant)' }}>
+                <Icon name={next.kind === 'place' ? 'location' : 'clock'} size={14} color="var(--md-on-surface-variant)" />
+                {next.kind === 'place' ? next.place : `בשעה ${next.time}`}
               </div>
             )}
           </div>
-          {next && (
-            <IconButton icon="snooze" tone="container" style={{ background: 'var(--md-surface-container-lowest)' }} />
-          )}
+          <ProgressRing value={progress} size={82} stroke={9} />
         </div>
-      </Card>
 
-      {/* Progress bento */}
-      <Card tone="lowest" className="reveal" style={{
-        padding: 18, marginBottom: 26, display: 'flex', alignItems: 'center', gap: 18,
-      }}>
-        <ProgressRing value={progress} />
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div>
-            <div style={{ font: '700 16px var(--font-display)', color: 'var(--md-on-surface)' }}>התקדמות היום</div>
-            <div style={{ font: '500 13px var(--font-body)', color: 'var(--md-on-surface-variant)', marginTop: 2 }}>
-              {`${doneCount} מתוך ${reminders.length} הושלמו`}
+        {divider}
+
+        {/* Stats strip */}
+        <div style={{ display: 'flex', position: 'relative' }}>
+          {[
+            { value: `${doneCount}/${reminders.length}`, label: 'בוצעו' },
+            { value: pending.length, label: 'ממתינות' },
+            { value: urgentCount, label: 'דחופות', urgent: urgentCount > 0 },
+          ].map((s, i, arr) => (
+            <div key={i} style={{ flex: 1, textAlign: 'center', position: 'relative' }}>
+              <div style={{
+                font: '800 17px var(--font-display)',
+                color: (s as { urgent?: boolean }).urgent ? 'var(--md-error)' : 'var(--md-on-surface)',
+                lineHeight: 1, marginBottom: 3,
+              }}>
+                {s.value}
+              </div>
+              <div style={{ font: '500 11px var(--font-body)', color: 'var(--md-on-surface-variant)' }}>{s.label}</div>
+              {i < arr.length - 1 && (
+                <div style={{
+                  position: 'absolute', insetInlineEnd: 0, top: 0, bottom: 0,
+                  width: 1, background: 'color-mix(in oklab, var(--md-outline-variant) 45%, transparent)',
+                }} />
+              )}
             </div>
-          </div>
-          <div style={{ display: 'flex', gap: 18 }}>
-            <MiniStat icon="pending_actions" tone="tertiary" value={pending.length} label="ממתינות" />
-            <MiniStat icon="priority_high" tone="error" value={urgentCount} label="דחופות" />
-          </div>
+          ))}
         </div>
       </Card>
 
@@ -280,10 +276,8 @@ export function HomeScreen({ reminders, onToggle, onOpen, name, onOpenColor, mod
 
       {groups.length === 0 && (
         <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--md-on-surface-variant)' }}>
-          <span className="msym" style={{ fontSize: 48, display: 'block', marginBottom: 12 }}>
-            check_circle
-          </span>
-          <div style={{ font: '600 16px var(--font-body)' }}>אין תזכורות בקטגוריה זו</div>
+          <Icon name="check-circle" size={48} color="var(--md-on-surface-variant)" />
+          <div style={{ font: '600 16px var(--font-body)', marginTop: 12 }}>אין תזכורות בקטגוריה זו</div>
         </div>
       )}
     </div>

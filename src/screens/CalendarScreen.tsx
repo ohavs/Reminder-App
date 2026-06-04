@@ -1,20 +1,22 @@
 import { useState } from 'react';
 import type { Reminder } from '../types';
-import { CAL_REMINDERS, HEB_MONTHS, HEB_DAYS_SHORT } from '../data/sampleData';
+import { HEB_MONTHS, HEB_DAYS_SHORT } from '../data/sampleData';
 import { CATEGORIES } from '../data/sampleData';
 import { Card } from '../components/ui/Card';
 import { TopBar } from '../components/ui/TopBar';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { IconButton } from '../components/ui/IconButton';
+import { Icon } from '../components/ui/Icon';
 import { ClayTile } from '../components/illustrations/ClayTile';
 
 interface CalendarScreenProps {
   reminders: Reminder[];
   onOpen: (r: Reminder) => void;
   onToggle: (id: string) => void;
+  onAdd?: (date: string) => void;
 }
 
-export function CalendarScreen({ reminders, onOpen, onToggle }: CalendarScreenProps) {
+export function CalendarScreen({ reminders, onOpen, onToggle, onAdd }: CalendarScreenProps) {
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
@@ -26,7 +28,6 @@ export function CalendarScreen({ reminders, onOpen, onToggle }: CalendarScreenPr
   const cells: (number | null)[] = [];
   for (let i = 0; i < firstDayDow; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-  // Fill trailing cells so every row is complete (consistent height)
   while (cells.length % 7 !== 0) cells.push(null);
 
   const prevMonth = () => {
@@ -39,14 +40,24 @@ export function CalendarScreen({ reminders, onOpen, onToggle }: CalendarScreenPr
   };
 
   const isCurrentMonth = viewYear === today.getFullYear() && viewMonth === today.getMonth();
-  const selReminders = reminders.filter((r) => r.kind === 'time');
+
+  const dateStr = (d: number) =>
+    `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+  const dotMap: Record<string, number> = {};
+  reminders.forEach((r) => {
+    if (r.dueDate) dotMap[r.dueDate] = (dotMap[r.dueDate] || 0) + 1;
+  });
+
+  const selDateStr = dateStr(sel);
+  const selReminders = reminders.filter((r) => r.dueDate === selDateStr);
 
   return (
     <div className="screen-pad">
       <TopBar
         title={<div style={{ font: '800 24px var(--font-display)', color: 'var(--md-on-surface)' }}>לוח שנה</div>}
         actions={[
-          <IconButton key="t" icon="today" tone="container"
+          <IconButton key="t" icon="calendar-check" tone="container"
             onClick={() => { setViewYear(today.getFullYear()); setViewMonth(today.getMonth()); setSel(today.getDate()); }}
             label="היום" />
         ]}
@@ -55,11 +66,11 @@ export function CalendarScreen({ reminders, onOpen, onToggle }: CalendarScreenPr
       <Card tone="lowest" className="reveal" style={{ padding: 18, marginBottom: 22 }}>
         {/* Month nav */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <IconButton icon="chevron_right" size={38} fontSize={22} tone="container" onClick={prevMonth} />
+          <IconButton icon="chevron-right" size={38} fontSize={22} tone="container" onClick={prevMonth} />
           <div style={{ font: '800 18px var(--font-display)', color: 'var(--md-on-surface)' }}>
             {`${HEB_MONTHS[viewMonth]} ${viewYear}`}
           </div>
-          <IconButton icon="chevron_left" size={38} fontSize={22} tone="container" onClick={nextMonth} />
+          <IconButton icon="chevron-left" size={38} fontSize={22} tone="container" onClick={nextMonth} />
         </div>
 
         {/* Day-of-week headers */}
@@ -75,19 +86,19 @@ export function CalendarScreen({ reminders, onOpen, onToggle }: CalendarScreenPr
         {/* Calendar grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', rowGap: 2, columnGap: 4 }}>
           {cells.map((d, idx) => {
-            if (d === null) return <div key={`e${idx}`} style={{ height: 46 }} />;
+            if (d === null) return <div key={`e${idx}`} style={{ height: 60 }} />;
             const isSel = d === sel;
             const isToday = isCurrentMonth && d === today.getDate();
-            const count = CAL_REMINDERS[d] || 0;
+            const count = dotMap[dateStr(d)] || 0;
             return (
               <div
                 key={d}
-                style={{ height: 46, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3 }}
+                style={{ height: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}
               >
                 <button
                   onClick={() => setSel(d)}
                   style={{
-                    width: 36, height: 36, flexShrink: 0,
+                    width: 44, height: 44, flexShrink: 0,
                     borderRadius: isSel ? 'var(--r-sm)' : '50%',
                     border: isToday && !isSel ? '2px solid var(--md-primary)' : 'none',
                     cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0,
@@ -99,7 +110,7 @@ export function CalendarScreen({ reminders, onOpen, onToggle }: CalendarScreenPr
                   }}
                 >
                   <span style={{
-                    font: `${isToday || isSel ? 800 : 500} 14px var(--font-body)`,
+                    font: `${isToday || isSel ? 800 : 500} 15px var(--font-body)`,
                     fontVariantNumeric: 'tabular-nums', lineHeight: 1,
                   }}>
                     {d}
@@ -107,7 +118,7 @@ export function CalendarScreen({ reminders, onOpen, onToggle }: CalendarScreenPr
                 </button>
                 {count > 0 && (
                   <span style={{
-                    width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
+                    width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
                     background: isSel ? 'var(--md-primary)' : 'var(--md-tertiary)',
                   }} />
                 )}
@@ -119,9 +130,15 @@ export function CalendarScreen({ reminders, onOpen, onToggle }: CalendarScreenPr
 
       <SectionTitle
         action={
-          <span style={{ font: '600 13px var(--font-body)', color: 'var(--md-on-surface-variant)' }}>
-            {isCurrentMonth && sel === today.getDate() ? 'היום' : `${sel} ב${HEB_MONTHS[viewMonth]}`}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ font: '600 13px var(--font-body)', color: 'var(--md-on-surface-variant)' }}>
+              {isCurrentMonth && sel === today.getDate() ? 'היום' : `${sel} ב${HEB_MONTHS[viewMonth]}`}
+            </span>
+            {onAdd && (
+              <IconButton icon="plus" size={32} fontSize={18} tone="container"
+                onClick={() => onAdd(selDateStr)} label="הוסף תזכורת" />
+            )}
+          </div>
         }
       >
         לוח הזמנים
@@ -169,7 +186,7 @@ export function CalendarScreen({ reminders, onOpen, onToggle }: CalendarScreenPr
                       color: 'var(--md-on-primary)', display: 'grid', placeItems: 'center',
                       WebkitTapHighlightColor: 'transparent',
                     }}>
-                    {r.done && <span className="msym" style={{ fontSize: 18 }}>check</span>}
+                    {r.done && <Icon name="check" size={16} color="var(--md-on-primary)" />}
                   </button>
                 </Card>
               </div>
@@ -179,8 +196,22 @@ export function CalendarScreen({ reminders, onOpen, onToggle }: CalendarScreenPr
 
         {selReminders.length === 0 && (
           <div style={{ textAlign: 'center', padding: '30px 20px', color: 'var(--md-on-surface-variant)' }}>
-            <span className="msym" style={{ fontSize: 42, display: 'block', marginBottom: 10 }}>event_available</span>
-            <div style={{ font: '600 15px var(--font-body)' }}>אין תזכורות ביום זה</div>
+            <Icon name="calendar-check" size={42} color="var(--md-on-surface-variant)" />
+            <div style={{ font: '600 15px var(--font-body)', marginTop: 10 }}>אין תזכורות ביום זה</div>
+            {onAdd && (
+              <button
+                onClick={() => onAdd(selDateStr)}
+                style={{
+                  marginTop: 14, padding: '10px 20px', borderRadius: 'var(--r-pill)',
+                  background: 'var(--md-primary-container)', color: 'var(--md-on-primary-container)',
+                  border: 'none', cursor: 'pointer', font: '600 14px var(--font-body)',
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                }}
+              >
+                <Icon name="plus" size={16} color="var(--md-on-primary-container)" />
+                הוסף תזכורת ליום זה
+              </button>
+            )}
           </div>
         )}
       </div>

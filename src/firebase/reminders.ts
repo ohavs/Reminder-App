@@ -24,6 +24,7 @@ function fromDoc(id: string, data: Record<string, unknown>): Reminder {
     repeat:   data.repeat  as string | undefined,
     place:    data.place   as string | undefined,
     trigger:  data.trigger as 'arrive' | 'leave' | undefined,
+    dueDate:  data.dueDate as string | undefined,
   };
 }
 
@@ -39,10 +40,11 @@ function toDoc(r: Omit<Reminder, 'id'>, userId: string) {
     cat:      r.cat,
     done:     r.done,
     doneAt:   r.doneAt ? Timestamp.fromDate(new Date()) : null,
-    time:     r.time   ?? null,
-    repeat:   r.repeat ?? null,
-    place:    r.place  ?? null,
+    time:     r.time    ?? null,
+    repeat:   r.repeat  ?? null,
+    place:    r.place   ?? null,
     trigger:  r.trigger ?? null,
+    dueDate:  r.dueDate ?? null,
     updatedAt: serverTimestamp(),
   };
 }

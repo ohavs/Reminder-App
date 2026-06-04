@@ -21,6 +21,7 @@ export interface Reminder {
   repeat?: string;
   place?: string;
   trigger?: ReminderTrigger;
+  dueDate?: string; // "YYYY-MM-DD"
 }
 
 export interface Category {
@@ -32,12 +33,6 @@ export interface Category {
 export interface SeedColor {
   hex: string;
   name: string;
-}
-
-export interface WeekStat {
-  day: string;
-  done: number;
-  total: number;
 }
 
 export interface AppearanceSettings {

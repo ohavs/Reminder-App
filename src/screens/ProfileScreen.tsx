@@ -8,6 +8,7 @@ import { TopBar } from '../components/ui/TopBar';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { Button } from '../components/ui/Button';
 import { Switch } from '../components/ui/Switch';
+import { Icon } from '../components/ui/Icon';
 import { ClayTile } from '../components/illustrations/ClayTile';
 import { useRipple } from '../hooks/useRipple';
 
@@ -120,19 +121,19 @@ export function ProfileScreen({ mode, setMode, onOpenColor, seed, user, complete
         />
         <div style={{ height: 1, background: 'var(--md-outline-variant)', marginInline: 16 }} />
         <SettingRow
-          icon={mode === 'dark' ? 'dark_mode' : 'light_mode'} tone="tertiary"
+          icon={mode === 'dark' ? 'moon' : 'sun'} tone="tertiary"
           title="מצב כהה" sub={mode === 'dark' ? 'פעיל' : 'כבוי'}
           trailing={<Switch checked={mode === 'dark'} onChange={(v) => setMode(v ? 'dark' : 'light')} />}
         />
         <div style={{ height: 1, background: 'var(--md-outline-variant)', marginInline: 16 }} />
         <SettingRow
-          icon="volume_up" tone="secondary" title="צלילי התראה" sub="צליל בעת תזכורת"
+          icon="volume" tone="secondary" title="צלילי התראה" sub="צליל בעת תזכורת"
           trailing={<Switch checked={sound} onChange={setSound} />}
         />
         <div style={{ height: 1, background: 'var(--md-outline-variant)', marginInline: 16 }} />
         <div style={{ padding: '14px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 12, font: '700 14px var(--font-body)', color: 'var(--md-on-surface-variant)' }}>
-            <span className="msym" style={{ fontSize: 19, color: 'var(--md-primary)' }}>rounded_corner</span>
+            <Icon name="sliders" size={18} color="var(--md-primary)" />
             עיגול פינות: {Math.round(radius * 100)}%
           </div>
           <input
@@ -147,7 +148,7 @@ export function ProfileScreen({ mode, setMode, onOpenColor, seed, user, complete
       <SectionTitle>פרטיות ונתונים</SectionTitle>
       <Card tone="lowest" style={{ marginBottom: 22, overflow: 'hidden' }}>
         <SettingRow
-          icon="my_location" tone="tertiary" title="תזכורות מבוססות מיקום"
+          icon="navigation" tone="tertiary" title="תזכורות מבוססות מיקום"
           sub="Geofence — הכל מעובד במכשיר"
           trailing={<Switch checked={geo} onChange={setGeo} />}
         />
@@ -155,11 +156,11 @@ export function ProfileScreen({ mode, setMode, onOpenColor, seed, user, complete
         <SettingRow
           icon="lock" tone="primary" title="עיבוד מקומי בלבד"
           sub="הנתונים לא יוצאים מהמכשיר"
-          trailing={<span className="msym" style={{ color: 'var(--md-primary)', fontSize: 22 }}>verified_user</span>}
+          trailing={<Icon name="shield-check" size={22} color="var(--md-primary)" />}
         />
         <div style={{ height: 1, background: 'var(--md-outline-variant)', marginInline: 16 }} />
         <SettingRow
-          icon="insights" tone="secondary" title="שיתוף אנליטיקה אנונימית"
+          icon="trending-up" tone="secondary" title="שיתוף אנליטיקה אנונימית"
           sub={analytics ? 'פעיל' : 'כבוי'}
           trailing={<Switch checked={analytics} onChange={setAnalytics} />}
         />

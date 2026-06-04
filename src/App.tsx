@@ -32,6 +32,7 @@ export function App() {
   const [toast, setToast] = useState<string | null>(null);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [navKey, setNavKey] = useState(0);
+  const [addDate, setAddDate] = useState<string | undefined>(undefined);
 
   useEffect(() => { setNavKey((k) => k + 1); }, [tab]);
 
@@ -63,7 +64,7 @@ export function App() {
   const addReminder = async (data: Omit<Reminder, 'id' | 'done' | 'doneAt'>) => {
     if (!user) return;
     setAdding(false);
-    setTab('home');
+    setAddDate(undefined);
     await fbAddReminder(user.uid, data);
     showToast('התזכורת נוספה ✨');
   };
@@ -122,9 +123,14 @@ export function App() {
               />
             )}
             {tab === 'calendar' && (
-              <CalendarScreen reminders={reminders} onToggle={toggle} onOpen={setDetail} />
+              <CalendarScreen
+                reminders={reminders}
+                onToggle={toggle}
+                onOpen={setDetail}
+                onAdd={(date) => { setAddDate(date); setAdding(true); }}
+              />
             )}
-            {tab === 'stats' && <StatsScreen />}
+            {tab === 'stats' && <StatsScreen reminders={reminders} />}
             {tab === 'profile' && (
               <ProfileScreen
                 mode={mode}
@@ -151,7 +157,7 @@ export function App() {
           transition: 'transform 0.45s var(--ease-spring)',
           overflowY: 'auto',
         }}>
-          {adding && <AddScreen onClose={() => setAdding(false)} onSave={addReminder} />}
+          {adding && <AddScreen onClose={() => { setAdding(false); setAddDate(undefined); }} onSave={addReminder} defaultDate={addDate} />}
         </div>
 
         <DetailSheet reminder={detail} onClose={() => setDetail(null)} onToggle={toggle} onDelete={del} />

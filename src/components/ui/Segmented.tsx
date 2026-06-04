@@ -1,3 +1,5 @@
+import { Icon } from './Icon';
+
 interface Option {
   value: string;
   label: string;
@@ -34,8 +36,8 @@ export function Segmented({ options, value, onChange }: SegmentedProps) {
               WebkitTapHighlightColor: 'transparent',
             }}
           >
-            {active && <span className="msym" style={{ fontSize: 18 }}>check</span>}
-            {o.icon && !active && <span className="msym" style={{ fontSize: 18 }}>{o.icon}</span>}
+            {active && <Icon name="check" size={17} />}
+            {o.icon && !active && <Icon name={o.icon} size={17} />}
             {o.label}
           </button>
         );

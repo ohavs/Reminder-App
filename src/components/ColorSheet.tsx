@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { SEED_COLORS } from '../data/sampleData';
 import { hexToOklch, oklchHueToHex } from '../theme/dynamicColor';
 import { Button } from './ui/Button';
+import { Icon } from './ui/Icon';
 
 interface ColorSheetProps {
   open: boolean;
@@ -50,7 +51,7 @@ export function ColorSheet({ open, onClose, seed, setSeed }: ColorSheetProps) {
         }} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-          <span className="msym" style={{ fontSize: 24, color: 'var(--md-primary)' }}>palette</span>
+          <Icon name="palette" size={24} color="var(--md-primary)" />
           <h3 style={{ font: '800 20px var(--font-display)', color: 'var(--md-on-surface)', margin: 0 }}>
             צבע דינמי
           </h3>
@@ -78,14 +79,14 @@ export function ColorSheet({ open, onClose, seed, setSeed }: ColorSheetProps) {
                   transform: sel ? 'scale(1.06)' : 'scale(1)',
                 }}
               >
-                {sel && <span className="msym" style={{ fontSize: 26, color: '#fff' }}>check</span>}
+                {sel && <Icon name="check" size={22} color="#fff" />}
               </button>
             );
           })}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-          <span className="msym" style={{ fontSize: 19, color: 'var(--md-on-surface-variant)' }}>tune</span>
+          <Icon name="sliders" size={19} color="var(--md-on-surface-variant)" />
           <span style={{ font: '700 14px var(--font-body)', color: 'var(--md-on-surface-variant)' }}>
             גוון מותאם אישית
           </span>
