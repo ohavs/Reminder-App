@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Reminder, CategoryKey, ThemeMode } from '../types';
+import type { Reminder, CategoryKey, ThemeMode, SharedList } from '../types';
 import { CATEGORIES, CATEGORY_ORDER } from '../data/sampleData';
 import { Card } from '../components/ui/Card';
 import { Chip } from '../components/ui/Chip';
@@ -142,9 +142,16 @@ interface HomeScreenProps {
   onOpenColor: () => void;
   mode: ThemeMode;
   setMode: (m: ThemeMode) => void;
+  lists: SharedList[];
+  activeListId: string | null;
+  onSelectList: (id: string | null) => void;
+  onManageLists: () => void;
 }
 
-export function HomeScreen({ reminders, onToggle, onOpen, name, onOpenColor, mode, setMode }: HomeScreenProps) {
+export function HomeScreen({
+  reminders, onToggle, onOpen, name, onOpenColor, mode, setMode,
+  lists, activeListId, onSelectList, onManageLists,
+}: HomeScreenProps) {
   const [filter, setFilter] = useState<'all' | CategoryKey>('all');
   const pending = reminders.filter((r) => !r.done);
   const next = pending[0];
@@ -251,8 +258,21 @@ export function HomeScreen({ reminders, onToggle, onOpen, name, onOpenColor, mod
         </div>
       </Card>
 
+      {/* Space switcher: personal / shared lists */}
+      <div className="hide-scroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, marginBottom: 14 }}>
+        <Chip selected={!activeListId} icon="user" onClick={() => onSelectList(null)}>אישי</Chip>
+        {lists.map((l) => (
+          <Chip key={l.id} selected={activeListId === l.id} icon="users" onClick={() => onSelectList(l.id)}>
+            {l.name}
+          </Chip>
+        ))}
+        <Chip icon="plus" onClick={onManageLists}>רשימות</Chip>
+      </div>
+
       {/* Category filter */}
-      <SectionTitle>המשימות שלי</SectionTitle>
+      <SectionTitle>
+        {activeListId ? (lists.find((l) => l.id === activeListId)?.name ?? 'רשימה משותפת') : 'המשימות שלי'}
+      </SectionTitle>
       <div className="hide-scroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, marginBottom: 4 }}>
         <Chip selected={filter === 'all'} icon="apps" onClick={() => setFilter('all')}>הכל</Chip>
         {CATEGORY_ORDER.map((c) => (

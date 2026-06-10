@@ -38,6 +38,14 @@ export interface SeedColor {
   name: string;
 }
 
+export interface SharedList {
+  id: string;
+  name: string;
+  ownerId: string;
+  members: string[];
+  inviteCode: string;
+}
+
 export interface AppearanceSettings {
   fontPair: FontPair;
   radius: number;

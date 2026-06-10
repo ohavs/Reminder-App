@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Reminder, NavTab, ThemeMode } from './types';
+import type { Reminder, NavTab, ThemeMode, SharedList } from './types';
 import { useDynamicColor } from './hooks/useDynamicColor';
 import { useAuth } from './hooks/useAuth';
 import { LoginScreen } from './screens/LoginScreen';
@@ -10,8 +10,11 @@ import {
   deleteReminder as fbDelete,
   updateReminder as fbUpdate,
 } from './firebase/reminders';
+import type { Scope } from './firebase/reminders';
+import { subscribeToMyLists } from './firebase/lists';
 import { initNotifications, scheduleReminder, cancelReminder } from './services/notifications';
 import { registerGeofence, removeGeofence } from './services/geofence';
+import { ListsSheet } from './components/ListsSheet';
 import { BottomBar } from './components/BottomBar';
 import { SideBar } from './components/SideBar';
 import { DetailSheet } from './components/DetailSheet';
@@ -37,6 +40,13 @@ export function App() {
   const [navKey, setNavKey] = useState(0);
   const [addDate, setAddDate] = useState<string | undefined>(undefined);
   const [editing, setEditing] = useState<Reminder | null>(null);
+  const [lists, setLists] = useState<SharedList[]>([]);
+  const [activeListId, setActiveListId] = useState<string | null>(null);
+  const [listsOpen, setListsOpen] = useState(false);
+
+  const scope: Scope = activeListId && user
+    ? { kind: 'list', listId: activeListId }
+    : { kind: 'user', uid: user?.uid ?? '' };
 
   useEffect(() => { setNavKey((k) => k + 1); }, [tab]);
 
@@ -44,8 +54,23 @@ export function App() {
 
   useEffect(() => {
     if (!user) return;
-    return subscribeToReminders(user.uid, setReminders);
+    return subscribeToReminders(
+      activeListId ? { kind: 'list', listId: activeListId } : { kind: 'user', uid: user.uid },
+      setReminders,
+    );
+  }, [user?.uid, activeListId]);
+
+  useEffect(() => {
+    if (!user) return;
+    return subscribeToMyLists(user.uid, setLists);
   }, [user?.uid]);
+
+  // Active list was deleted or we were removed — fall back to personal
+  useEffect(() => {
+    if (activeListId && lists.length > 0 && !lists.some((l) => l.id === activeListId)) {
+      setActiveListId(null);
+    }
+  }, [lists, activeListId]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -58,7 +83,7 @@ export function App() {
     if (!r) return;
     const done = !r.done;
     if (done) showToast('המשימה הושלמה! 🎉');
-    await fbToggle(user.uid, id, done);
+    await fbToggle(scope, id, done);
     if (done) cancelReminder(id);
     else scheduleReminder({ ...r, done: false });
   };
@@ -66,7 +91,7 @@ export function App() {
   const del = async (id: string) => {
     if (!user) return;
     setDetail(null);
-    await fbDelete(user.uid, id);
+    await fbDelete(scope, id);
     cancelReminder(id);
     removeGeofence(id);
   };
@@ -78,12 +103,12 @@ export function App() {
     if (editing) {
       const id = editing.id;
       setEditing(null);
-      await fbUpdate(user.uid, id, data);
+      await fbUpdate(scope, id, data);
       await cancelReminder(id);
       afterSave({ ...data, id, done: false });
       showToast('התזכורת עודכנה ✨');
     } else {
-      const id = await fbAddReminder(user.uid, data);
+      const id = await fbAddReminder(scope, user.uid, data);
       afterSave({ ...data, id, done: false });
       showToast('התזכורת נוספה ✨');
     }
@@ -147,6 +172,10 @@ export function App() {
                 onOpenColor={() => setColorOpen(true)}
                 mode={mode}
                 setMode={setMode}
+                lists={lists}
+                activeListId={activeListId}
+                onSelectList={setActiveListId}
+                onManageLists={() => setListsOpen(true)}
               />
             )}
             {tab === 'calendar' && (
@@ -202,6 +231,17 @@ export function App() {
           onEdit={(r) => { setEditing(r); setAdding(true); }}
         />
         <ColorSheet open={colorOpen} onClose={() => setColorOpen(false)} seed={seed} setSeed={setSeed} />
+        {user && (
+          <ListsSheet
+            open={listsOpen}
+            onClose={() => setListsOpen(false)}
+            uid={user.uid}
+            lists={lists}
+            activeListId={activeListId}
+            onSelect={setActiveListId}
+            showToast={showToast}
+          />
+        )}
         {toast && <Toast message={toast} />}
       </div>
     </div>

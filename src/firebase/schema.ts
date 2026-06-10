@@ -83,4 +83,21 @@ export const paths = {
   reminder:     (uid: string, rid: string)  => `users/${uid}/reminders/${rid}`,
   categories:   (uid: string)               => `users/${uid}/categories`,
   category:     (uid: string, cid: string)  => `users/${uid}/categories/${cid}`,
+  lists:        ()                          => `lists`,
+  list:         (lid: string)               => `lists/${lid}`,
+  listReminders:(lid: string)               => `lists/${lid}/reminders`,
+  listReminder: (lid: string, rid: string)  => `lists/${lid}/reminders/${rid}`,
+  invite:       (code: string)              => `invites/${code}`,
+};
+
+// Where a reminder lives: the user's private collection or a shared list
+export type Scope =
+  | { kind: 'user'; uid: string }
+  | { kind: 'list'; listId: string };
+
+export const scopePaths = {
+  reminders: (s: Scope) =>
+    s.kind === 'user' ? paths.reminders(s.uid) : paths.listReminders(s.listId),
+  reminder: (s: Scope, rid: string) =>
+    s.kind === 'user' ? paths.reminder(s.uid, rid) : paths.listReminder(s.listId, rid),
 };

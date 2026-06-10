@@ -1,12 +1,15 @@
 import {
   collection, doc,
   addDoc, updateDoc, deleteDoc, onSnapshot,
-  query, orderBy, where,
+  query, orderBy,
   serverTimestamp, Timestamp,
 } from 'firebase/firestore';
 import { db } from './config';
-import { paths } from './schema';
+import { scopePaths } from './schema';
+import type { Scope } from './schema';
 import type { Reminder } from '../types';
+
+export type { Scope };
 
 // Convert Firestore doc → app Reminder
 function fromDoc(id: string, data: Record<string, unknown>): Reminder {
@@ -32,9 +35,9 @@ function fromDoc(id: string, data: Record<string, unknown>): Reminder {
 }
 
 // Convert app Reminder → Firestore doc fields
-function toDoc(r: Omit<Reminder, 'id'>, userId: string) {
+function toDoc(r: Omit<Reminder, 'id'>, createdBy: string) {
   return {
-    userId,
+    createdBy,
     title:    r.title,
     sub:      r.sub    ?? null,
     icon:     r.icon,
@@ -55,49 +58,34 @@ function toDoc(r: Omit<Reminder, 'id'>, userId: string) {
   };
 }
 
-// Subscribe to all reminders for a user (real-time)
+// Subscribe to all reminders in a scope (real-time)
 export function subscribeToReminders(
-  userId: string,
+  scope: Scope,
   onChange: (reminders: Reminder[]) => void,
 ): () => void {
   const q = query(
-    collection(db, paths.reminders(userId)),
+    collection(db, scopePaths.reminders(scope)),
     orderBy('createdAt', 'desc'),
   );
 
   return onSnapshot(q, (snap) => {
     const items = snap.docs.map((d) => fromDoc(d.id, d.data() as Record<string, unknown>));
     onChange(items);
-  });
-}
-
-// Subscribe to today's pending reminders only
-export function subscribeTodayReminders(
-  userId: string,
-  onChange: (reminders: Reminder[]) => void,
-): () => void {
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
-
-  const q = query(
-    collection(db, paths.reminders(userId)),
-    where('done', '==', false),
-    orderBy('createdAt', 'desc'),
-  );
-
-  return onSnapshot(q, (snap) => {
-    const items = snap.docs.map((d) => fromDoc(d.id, d.data() as Record<string, unknown>));
-    onChange(items);
+  }, (err) => {
+    // Permission errors can fire transiently when leaving a list
+    console.warn('reminders subscription error', err);
+    onChange([]);
   });
 }
 
 // Add a new reminder
 export async function addReminder(
-  userId: string,
+  scope: Scope,
+  createdBy: string,
   data: Omit<Reminder, 'id' | 'done' | 'doneAt'>,
 ): Promise<string> {
-  const ref = await addDoc(collection(db, paths.reminders(userId)), {
-    ...toDoc({ ...data, done: false }, userId),
+  const ref = await addDoc(collection(db, scopePaths.reminders(scope)), {
+    ...toDoc({ ...data, done: false }, createdBy),
     createdAt: serverTimestamp(),
   });
   return ref.id;
@@ -105,11 +93,11 @@ export async function addReminder(
 
 // Toggle done state
 export async function toggleReminder(
-  userId: string,
+  scope: Scope,
   reminderId: string,
   done: boolean,
 ): Promise<void> {
-  await updateDoc(doc(db, paths.reminder(userId, reminderId)), {
+  await updateDoc(doc(db, scopePaths.reminder(scope, reminderId)), {
     done,
     doneAt:    done ? serverTimestamp() : null,
     updatedAt: serverTimestamp(),
@@ -118,19 +106,19 @@ export async function toggleReminder(
 
 // Delete a reminder
 export async function deleteReminder(
-  userId: string,
+  scope: Scope,
   reminderId: string,
 ): Promise<void> {
-  await deleteDoc(doc(db, paths.reminder(userId, reminderId)));
+  await deleteDoc(doc(db, scopePaths.reminder(scope, reminderId)));
 }
 
 // Update reminder fields
 export async function updateReminder(
-  userId: string,
+  scope: Scope,
   reminderId: string,
   fields: Partial<Omit<Reminder, 'id'>>,
 ): Promise<void> {
-  await updateDoc(doc(db, paths.reminder(userId, reminderId)), {
+  await updateDoc(doc(db, scopePaths.reminder(scope, reminderId)), {
     ...fields,
     updatedAt: serverTimestamp(),
   });
