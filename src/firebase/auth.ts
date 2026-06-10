@@ -3,12 +3,15 @@ import {
   createUserWithEmailAndPassword,
   signInAnonymously,
   signInWithPopup,
+  signInWithCredential,
   GoogleAuthProvider,
   signOut as fbSignOut,
   onAuthStateChanged,
   updateProfile,
   type User,
 } from 'firebase/auth';
+import { Capacitor } from '@capacitor/core';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 import { auth } from './config';
 import { getOrCreateProfile } from './userProfile';
 
@@ -19,7 +22,20 @@ export function onAuth(callback: (user: User | null) => void): () => void {
 }
 
 export async function signInWithGoogle(): Promise<User> {
-  const { user } = await signInWithPopup(auth, googleProvider);
+  let user: User;
+
+  if (Capacitor.isNativePlatform()) {
+    // Google blocks OAuth inside WebViews — use the native Google
+    // Sign-In flow, then hand the credential to the web SDK so the
+    // rest of the app (Firestore listeners etc.) works unchanged.
+    const result = await FirebaseAuthentication.signInWithGoogle();
+    const idToken = result.credential?.idToken;
+    if (!idToken) throw new Error('Google sign-in returned no credential');
+    ({ user } = await signInWithCredential(auth, GoogleAuthProvider.credential(idToken)));
+  } else {
+    ({ user } = await signInWithPopup(auth, googleProvider));
+  }
+
   await getOrCreateProfile(
     user.uid,
     user.email ?? '',
@@ -51,6 +67,9 @@ export async function signInWithEmail(email: string, password: string): Promise<
 }
 
 export async function signOut(): Promise<void> {
+  if (Capacitor.isNativePlatform()) {
+    await FirebaseAuthentication.signOut().catch(() => {});
+  }
   await fbSignOut(auth);
 }
 
