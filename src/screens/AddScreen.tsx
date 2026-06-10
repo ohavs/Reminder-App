@@ -9,7 +9,8 @@ import { Chip } from '../components/ui/Chip';
 import { Segmented } from '../components/ui/Segmented';
 import { Icon } from '../components/ui/Icon';
 import { ClayTile } from '../components/illustrations/ClayTile';
-import { ClayPin } from '../components/illustrations/ClayPin';
+import { LocationPicker } from '../components/LocationPicker';
+import type { GeoPoint } from '../components/LocationPicker';
 
 const fieldStyle: CSSProperties = {
   width: '100%', height: 56, padding: '0 18px', borderRadius: 'var(--r-md)',
@@ -73,6 +74,26 @@ export function AddScreen({ onClose, onSave, defaultDate, editing }: AddScreenPr
   const [repeat, setRepeat] = useState(editing?.repeat ?? 'חד פעמי');
   const [priority, setPriority] = useState<ReminderPriority>(editing?.priority ?? 'normal');
   const [cat, setCat] = useState<CategoryKey>(editing?.cat ?? 'personal');
+  const [geo, setGeo] = useState<GeoPoint | null>(
+    editing?.lat != null && editing?.lng != null
+      ? { lat: editing.lat, lng: editing.lng, radius: editing.radius ?? 200 }
+      : null,
+  );
+  const [searching, setSearching] = useState(false);
+
+  const searchPlace = async () => {
+    const q = place.trim();
+    if (!q || searching) return;
+    setSearching(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=he&q=${encodeURIComponent(q)}`,
+      );
+      const data = await res.json();
+      if (data[0]) setGeo({ lat: +data[0].lat, lng: +data[0].lon, radius: geo?.radius ?? 200 });
+    } catch { /* offline / blocked — pin can still be placed manually */ }
+    setSearching(false);
+  };
 
   const handleSave = () => {
     onSave({
@@ -86,6 +107,9 @@ export function AddScreen({ onClose, onSave, defaultDate, editing }: AddScreenPr
         ? (trigger === 'arrive' ? 'בהגעה למקום' : 'ביציאה מהמקום')
         : repeat,
       dueDate: dueDate || undefined,
+      lat: kind === 'place' ? geo?.lat : undefined,
+      lng: kind === 'place' ? geo?.lng : undefined,
+      radius: kind === 'place' ? geo?.radius : undefined,
     });
   };
 
@@ -173,21 +197,57 @@ export function AddScreen({ onClose, onSave, defaultDate, editing }: AddScreenPr
         ) : (
           <div className="reveal">
             <FieldLabel icon="map-pin">מיקום</FieldLabel>
-            <input
-              value={place}
-              onChange={(e) => setPlace(e.target.value)}
-              placeholder="חפש כתובת או מקום"
-              style={{ ...fieldStyle, marginBottom: 14 }}
-            />
-            <div style={{
-              height: 130, borderRadius: 'var(--r-md)', position: 'relative', overflow: 'hidden',
-              background: 'repeating-linear-gradient(45deg, var(--md-surface-container), var(--md-surface-container) 14px, var(--md-surface-container-high) 14px, var(--md-surface-container-high) 28px)',
-              border: '1.5px solid var(--md-outline-variant)', marginBottom: 14,
-              display: 'grid', placeItems: 'center',
-            }}>
-              <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(60% 60% at 50% 45%, var(--md-tertiary-container), transparent 70%)', opacity: 0.6 }} />
-              <ClayPin size={88} />
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+              <input
+                value={place}
+                onChange={(e) => setPlace(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') searchPlace(); }}
+                placeholder="חפש כתובת או מקום"
+                style={{ ...fieldStyle, flex: 1 }}
+              />
+              <button
+                onClick={searchPlace}
+                aria-label="חפש"
+                style={{
+                  width: 56, height: 56, flexShrink: 0, borderRadius: 'var(--r-md)',
+                  border: 'none', cursor: 'pointer',
+                  background: 'var(--md-primary-container)', color: 'var(--md-on-primary-container)',
+                  display: 'grid', placeItems: 'center',
+                  opacity: searching ? 0.5 : 1,
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+              >
+                <Icon name="search" size={22} />
+              </button>
             </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <LocationPicker value={geo} onChange={setGeo} />
+              <div style={{
+                marginTop: 8, font: '500 12px var(--font-body)',
+                color: 'var(--md-on-surface-variant)', textAlign: 'center',
+              }}>
+                {geo ? 'גרור או לחץ על המפה לעדכון המיקום' : 'לחץ על המפה לבחירת מיקום'}
+              </div>
+            </div>
+
+            {geo && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{
+                  display: 'flex', justifyContent: 'space-between', marginBottom: 8,
+                  font: '700 14px var(--font-body)', color: 'var(--md-on-surface-variant)',
+                }}>
+                  <span>רדיוס התראה</span>
+                  <span style={{ color: 'var(--md-primary)' }}>{geo.radius} מ׳</span>
+                </div>
+                <input
+                  type="range" min="100" max="1000" step="50" value={geo.radius}
+                  onChange={(e) => setGeo({ ...geo, radius: +e.target.value })}
+                  style={{ width: '100%', accentColor: 'var(--md-primary)' }}
+                />
+              </div>
+            )}
+
             <Segmented
               value={trigger}
               onChange={(v) => setTrigger(v as ReminderTrigger)}

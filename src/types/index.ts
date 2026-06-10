@@ -22,6 +22,9 @@ export interface Reminder {
   place?: string;
   trigger?: ReminderTrigger;
   dueDate?: string; // "YYYY-MM-DD"
+  lat?: number;
+  lng?: number;
+  radius?: number; // geofence radius, meters
 }
 
 export interface Category {

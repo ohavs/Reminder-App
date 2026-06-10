@@ -11,6 +11,7 @@ import {
   updateReminder as fbUpdate,
 } from './firebase/reminders';
 import { initNotifications, scheduleReminder, cancelReminder } from './services/notifications';
+import { registerGeofence, removeGeofence } from './services/geofence';
 import { BottomBar } from './components/BottomBar';
 import { SideBar } from './components/SideBar';
 import { DetailSheet } from './components/DetailSheet';
@@ -67,6 +68,7 @@ export function App() {
     setDetail(null);
     await fbDelete(user.uid, id);
     cancelReminder(id);
+    removeGeofence(id);
   };
 
   const saveReminder = async (data: Omit<Reminder, 'id' | 'done' | 'doneAt'>) => {
@@ -78,12 +80,19 @@ export function App() {
       setEditing(null);
       await fbUpdate(user.uid, id, data);
       await cancelReminder(id);
-      scheduleReminder({ ...data, id, done: false });
+      afterSave({ ...data, id, done: false });
       showToast('התזכורת עודכנה ✨');
     } else {
       const id = await fbAddReminder(user.uid, data);
-      scheduleReminder({ ...data, id, done: false });
+      afterSave({ ...data, id, done: false });
       showToast('התזכורת נוספה ✨');
+    }
+  };
+
+  const afterSave = (r: Reminder) => {
+    if (r.kind === 'time') scheduleReminder(r);
+    else if (r.lat != null && r.lng != null) {
+      registerGeofence(r, { lat: r.lat, lng: r.lng, radiusMeters: r.radius ?? 200 });
     }
   };
 

@@ -35,13 +35,22 @@ jobs:
           java-version: 21
 
       - name: Sync Capacitor
-        run: npx cap sync android
+        run: |
+          set -o pipefail
+          npx cap sync android 2>&1 | tee sync.log || {
+            while IFS= read -r line; do echo "::error::sync: $line"; done < <(tail -10 sync.log)
+            exit 1
+          }
 
       - name: Build debug APK
         working-directory: android
         run: |
+          set -o pipefail
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon 2>&1 | tee gradle.log || {
+            while IFS= read -r line; do echo "::error::gradle: $line"; done < <(grep -E "error:|FAILURE|Caused by" gradle.log | head -10)
+            exit 1
+          }
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4

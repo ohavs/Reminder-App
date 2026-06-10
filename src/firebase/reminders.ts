@@ -25,6 +25,9 @@ function fromDoc(id: string, data: Record<string, unknown>): Reminder {
     place:    data.place   as string | undefined,
     trigger:  data.trigger as 'arrive' | 'leave' | undefined,
     dueDate:  data.dueDate as string | undefined,
+    lat:      data.lat    as number | undefined,
+    lng:      data.lng    as number | undefined,
+    radius:   data.radius as number | undefined,
   };
 }
 
@@ -45,6 +48,9 @@ function toDoc(r: Omit<Reminder, 'id'>, userId: string) {
     place:    r.place   ?? null,
     trigger:  r.trigger ?? null,
     dueDate:  r.dueDate ?? null,
+    lat:      r.lat    ?? null,
+    lng:      r.lng    ?? null,
+    radius:   r.radius ?? null,
     updatedAt: serverTimestamp(),
   };
 }
