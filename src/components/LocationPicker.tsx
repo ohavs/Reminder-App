@@ -10,8 +10,9 @@ export interface GeoPoint {
 
 interface LocationPickerProps {
   value: GeoPoint | null;
-  onChange: (v: GeoPoint) => void;
+  onChange?: (v: GeoPoint) => void;
   height?: number;
+  readonly?: boolean;
 }
 
 const DEFAULT_CENTER: [number, number] = [32.0853, 34.7818]; // Tel Aviv
@@ -30,7 +31,7 @@ const pinIcon = L.divIcon({
   iconAnchor: [15, 28],
 });
 
-export function LocationPicker({ value, onChange, height = 220 }: LocationPickerProps) {
+export function LocationPicker({ value, onChange, height = 220, readonly = false }: LocationPickerProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
@@ -40,7 +41,10 @@ export function LocationPicker({ value, onChange, height = 220 }: LocationPicker
 
   useEffect(() => {
     if (!hostRef.current || mapRef.current) return;
-    const map = L.map(hostRef.current)
+    const map = L.map(hostRef.current, readonly ? {
+      dragging: false, zoomControl: false, scrollWheelZoom: false,
+      doubleClickZoom: false, touchZoom: false, boxZoom: false, keyboard: false,
+    } : {})
       .setView(value ? [value.lat, value.lng] : DEFAULT_CENTER, value ? 15 : 13);
     map.attributionControl.setPrefix(false);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -48,13 +52,15 @@ export function LocationPicker({ value, onChange, height = 220 }: LocationPicker
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
 
-    map.on('click', (e: L.LeafletMouseEvent) => {
-      onChange({
-        lat: +e.latlng.lat.toFixed(6),
-        lng: +e.latlng.lng.toFixed(6),
-        radius: valueRef.current?.radius ?? DEFAULT_RADIUS,
+    if (!readonly && onChange) {
+      map.on('click', (e: L.LeafletMouseEvent) => {
+        onChange({
+          lat: +e.latlng.lat.toFixed(6),
+          lng: +e.latlng.lng.toFixed(6),
+          radius: valueRef.current?.radius ?? DEFAULT_RADIUS,
+        });
       });
-    });
+    }
 
     mapRef.current = map;
 

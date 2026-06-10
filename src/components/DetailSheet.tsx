@@ -3,6 +3,7 @@ import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Icon } from './ui/Icon';
 import { ClayTile } from './illustrations/ClayTile';
+import { LocationPicker } from './LocationPicker';
 
 interface DetailSheetProps {
   reminder: Reminder | null;
@@ -105,6 +106,16 @@ export function DetailSheet({ reminder, onClose, onToggle, onDelete, onEdit }: D
                 </div>
               </Card>
             </div>
+
+            {reminder.kind === 'place' && reminder.lat != null && reminder.lng != null && (
+              <div style={{ marginBottom: 22 }}>
+                <LocationPicker
+                  readonly
+                  height={150}
+                  value={{ lat: reminder.lat, lng: reminder.lng, radius: reminder.radius ?? 200 }}
+                />
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: 12 }}>
               <Button
