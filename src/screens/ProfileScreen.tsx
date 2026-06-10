@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import type { ThemeMode } from '../types';
+import type { ThemeMode, Reminder } from '../types';
 import { SEED_COLORS } from '../data/sampleData';
 import { signOut } from '../firebase/auth';
 import { Card } from '../components/ui/Card';
@@ -53,14 +53,41 @@ interface ProfileScreenProps {
   seed: string;
   user: { displayName: string | null; email: string | null; photoURL: string | null } | null;
   completedCount: number;
+  reminders: Reminder[];
+  onImport: (items: unknown[]) => void;
 }
 
-export function ProfileScreen({ mode, setMode, onOpenColor, seed, user, completedCount }: ProfileScreenProps) {
+export function ProfileScreen({ mode, setMode, onOpenColor, seed, user, completedCount, reminders, onImport }: ProfileScreenProps) {
   const [geo, setGeo] = useState(true);
   const [analytics, setAnalytics] = useState(false);
   const [sound, setSound] = useState(true);
   const [radius, setRadius] = useState(1);
   const seedName = (SEED_COLORS.find((c) => c.hex.toLowerCase() === seed.toLowerCase()) || {}).name || 'מותאם אישית';
+
+  const exportData = () => {
+    const blob = new Blob([JSON.stringify(reminders, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ultra-reminders-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importData = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json,.json';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      try {
+        const items = JSON.parse(await file.text());
+        if (Array.isArray(items)) onImport(items);
+      } catch { /* invalid file — ignore */ }
+    };
+    input.click();
+  };
 
   const handleRadiusChange = (val: number) => {
     setRadius(val);
@@ -169,8 +196,8 @@ export function ProfileScreen({ mode, setMode, onOpenColor, seed, user, complete
       {/* Backup */}
       <SectionTitle>גיבוי</SectionTitle>
       <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
-        <Button variant="tonal" full icon="download" style={{ flex: 1 }}>ייצוא נתונים</Button>
-        <Button variant="outline" full icon="upload" style={{ flex: 1 }}>ייבוא</Button>
+        <Button variant="tonal" full icon="download" style={{ flex: 1 }} onClick={exportData}>ייצוא נתונים</Button>
+        <Button variant="outline" full icon="upload" style={{ flex: 1 }} onClick={importData}>ייבוא</Button>
       </div>
 
       {/* Sign out */}

@@ -134,6 +134,40 @@ export function App() {
     });
   }, [reminders, user?.uid, activeListId]);
 
+  const importReminders = async (items: unknown[]) => {
+    if (!user) return;
+    const valid = items
+      .filter((it): it is Record<string, unknown> =>
+        !!it && typeof it === 'object'
+        && typeof (it as Record<string, unknown>).title === 'string'
+        && ((it as Record<string, unknown>).kind === 'time' || (it as Record<string, unknown>).kind === 'place'))
+      .slice(0, 200);
+    if (valid.length === 0) {
+      showToast('הקובץ לא מכיל תזכורות תקינות');
+      return;
+    }
+    for (const it of valid) {
+      await fbAddReminder(scope, user.uid, {
+        title:    it.title as string,
+        sub:      typeof it.sub === 'string' ? it.sub : undefined,
+        icon:     typeof it.icon === 'string' ? it.icon : 'bell',
+        kind:     it.kind as 'time' | 'place',
+        priority: it.priority === 'urgent' ? 'urgent' : 'normal',
+        cat:      ['health', 'work', 'personal', 'shopping'].includes(it.cat as string)
+                    ? (it.cat as Reminder['cat']) : 'personal',
+        time:     typeof it.time === 'string' ? it.time : undefined,
+        repeat:   typeof it.repeat === 'string' ? it.repeat : undefined,
+        place:    typeof it.place === 'string' ? it.place : undefined,
+        trigger:  it.trigger === 'leave' ? 'leave' : it.trigger === 'arrive' ? 'arrive' : undefined,
+        dueDate:  typeof it.dueDate === 'string' ? it.dueDate : undefined,
+        lat:      typeof it.lat === 'number' ? it.lat : undefined,
+        lng:      typeof it.lng === 'number' ? it.lng : undefined,
+        radius:   typeof it.radius === 'number' ? it.radius : undefined,
+      });
+    }
+    showToast(`יובאו ${valid.length} תזכורות ✨`);
+  };
+
   const afterSave = (r: Reminder) => {
     if (r.kind === 'time') scheduleReminder(r);
     else if (r.lat != null && r.lng != null) {
@@ -215,6 +249,8 @@ export function App() {
                 seed={seed}
                 user={user}
                 completedCount={reminders.filter((r) => r.done).length}
+                reminders={reminders}
+                onImport={importReminders}
               />
             )}
           </div>
