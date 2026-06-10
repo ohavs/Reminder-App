@@ -40,9 +40,13 @@ export function LocationPicker({ value, onChange, height = 220 }: LocationPicker
 
   useEffect(() => {
     if (!hostRef.current || mapRef.current) return;
-    const map = L.map(hostRef.current, { attributionControl: false })
+    const map = L.map(hostRef.current)
       .setView(value ? [value.lat, value.lng] : DEFAULT_CENTER, value ? 15 : 13);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    map.attributionControl.setPrefix(false);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
 
     map.on('click', (e: L.LeafletMouseEvent) => {
       onChange({
