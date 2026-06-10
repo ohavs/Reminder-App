@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ULTRA תזכורות</string>
+    <string name="title_activity_main">ULTRA תזכורות</string>
+    <string name="package_name">com.ultra.reminders</string>
+    <string name="custom_url_scheme">com.ultra.reminders</string>
+</resources>
