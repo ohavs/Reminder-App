@@ -25,9 +25,14 @@ jobs:
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
       - name: Deploy Firestore rules
         run: |
+          set -o pipefail
           echo "$FIREBASE_SA" > /tmp/sa.json
           GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json npx firebase-tools deploy \
-            --only firestore:rules --project reminder-app-eeb53 --non-interactive
+            --only firestore:rules --project reminder-app-eeb53 --non-interactive --debug 2>&1 | tee rules.log || {
+            while IFS= read -r line; do echo "::error::rules: $line"; done < <(grep -iE "error|denied|permission|403|401" rules.log | tail -8)
+            rm /tmp/sa.json
+            exit 1
+          }
           rm /tmp/sa.json
         env:
           FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
