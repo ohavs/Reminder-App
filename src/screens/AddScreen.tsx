@@ -89,7 +89,7 @@ export function AddScreen({ onClose, onSave, defaultDate }: AddScreenProps) {
   };
 
   return (
-    <div className="screen-pad" style={{ paddingBottom: 120 }}>
+    <div className="screen-pad" style={{ paddingBottom: 0, display: 'flex', flexDirection: 'column' }}>
       <TopBar
         leading={<IconButton icon="x" onClick={onClose} label="סגור" />}
         title={
@@ -201,8 +201,8 @@ export function AddScreen({ onClose, onSave, defaultDate }: AddScreenProps) {
       </div>
 
       <div style={{
-        position: 'absolute', insetInline: 0, bottom: 0,
-        padding: '16px 22px 22px',
+        position: 'sticky', bottom: 0, marginTop: 28,
+        padding: '16px 0 22px',
         background: 'linear-gradient(to top, var(--md-surface) 70%, transparent)',
       }}>
         <Button full icon="check" onClick={handleSave}>שמירת תזכורת</Button>
