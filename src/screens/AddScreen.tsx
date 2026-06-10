@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
-import type { Reminder, ReminderKind, ReminderPriority, ReminderTrigger } from '../types';
-import { REPEAT_OPTS, ICON_CHOICES } from '../data/sampleData';
+import type { Reminder, ReminderKind, ReminderPriority, ReminderTrigger, CategoryKey } from '../types';
+import { REPEAT_OPTS, ICON_CHOICES, CATEGORIES, CATEGORY_ORDER } from '../data/sampleData';
 import { TopBar } from '../components/ui/TopBar';
 import { IconButton } from '../components/ui/IconButton';
 import { Button } from '../components/ui/Button';
@@ -59,19 +59,20 @@ interface AddScreenProps {
   onClose: () => void;
   onSave: (data: NewReminder) => void;
   defaultDate?: string;
+  editing?: Reminder | null;
 }
 
-export function AddScreen({ onClose, onSave, defaultDate }: AddScreenProps) {
-  const [title, setTitle] = useState('');
-  const [icon, setIcon] = useState('bell');
-  const [kind, setKind] = useState<ReminderKind>('time');
-  const [time, setTime] = useState('09:00');
-  const [dueDate, setDueDate] = useState(defaultDate ?? '');
-  const [place, setPlace] = useState('');
-  const [trigger, setTrigger] = useState<ReminderTrigger>('arrive');
-  const [repeat, setRepeat] = useState('חד פעמי');
-  const [priority, setPriority] = useState<ReminderPriority>('normal');
-  const [cat] = useState<'personal'>('personal');
+export function AddScreen({ onClose, onSave, defaultDate, editing }: AddScreenProps) {
+  const [title, setTitle] = useState(editing?.title ?? '');
+  const [icon, setIcon] = useState(editing?.icon ?? 'bell');
+  const [kind, setKind] = useState<ReminderKind>(editing?.kind ?? 'time');
+  const [time, setTime] = useState(editing?.time ?? '09:00');
+  const [dueDate, setDueDate] = useState(editing?.dueDate ?? defaultDate ?? '');
+  const [place, setPlace] = useState(editing?.place ?? '');
+  const [trigger, setTrigger] = useState<ReminderTrigger>(editing?.trigger ?? 'arrive');
+  const [repeat, setRepeat] = useState(editing?.repeat ?? 'חד פעמי');
+  const [priority, setPriority] = useState<ReminderPriority>(editing?.priority ?? 'normal');
+  const [cat, setCat] = useState<CategoryKey>(editing?.cat ?? 'personal');
 
   const handleSave = () => {
     onSave({
@@ -94,7 +95,7 @@ export function AddScreen({ onClose, onSave, defaultDate }: AddScreenProps) {
         leading={<IconButton icon="x" onClick={onClose} label="סגור" />}
         title={
           <div style={{ font: '800 22px var(--font-display)', color: 'var(--md-on-surface)' }}>
-            תזכורת חדשה
+            {editing ? 'עריכת תזכורת' : 'תזכורת חדשה'}
           </div>
         }
       />
@@ -121,6 +122,17 @@ export function AddScreen({ onClose, onSave, defaultDate }: AddScreenProps) {
         <div>
           <FieldLabel icon="tag">אייקון</FieldLabel>
           <IconPicker value={icon} onChange={setIcon} />
+        </div>
+
+        <div>
+          <FieldLabel icon="grid">קטגוריה</FieldLabel>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {CATEGORY_ORDER.map((c) => (
+              <Chip key={c} selected={cat === c} icon={CATEGORIES[c].icon} onClick={() => setCat(c)}>
+                {CATEGORIES[c].label}
+              </Chip>
+            ))}
+          </div>
         </div>
 
         <div>
@@ -205,7 +217,7 @@ export function AddScreen({ onClose, onSave, defaultDate }: AddScreenProps) {
         padding: '16px 0 22px',
         background: 'linear-gradient(to top, var(--md-surface) 70%, transparent)',
       }}>
-        <Button full icon="check" onClick={handleSave}>שמירת תזכורת</Button>
+        <Button full icon="check" onClick={handleSave}>{editing ? 'שמירת שינויים' : 'שמירת תזכורת'}</Button>
       </div>
     </div>
   );

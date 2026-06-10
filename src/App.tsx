@@ -8,7 +8,9 @@ import {
   addReminder as fbAddReminder,
   toggleReminder as fbToggle,
   deleteReminder as fbDelete,
+  updateReminder as fbUpdate,
 } from './firebase/reminders';
+import { initNotifications, scheduleReminder, cancelReminder } from './services/notifications';
 import { BottomBar } from './components/BottomBar';
 import { SideBar } from './components/SideBar';
 import { DetailSheet } from './components/DetailSheet';
@@ -33,8 +35,11 @@ export function App() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [navKey, setNavKey] = useState(0);
   const [addDate, setAddDate] = useState<string | undefined>(undefined);
+  const [editing, setEditing] = useState<Reminder | null>(null);
 
   useEffect(() => { setNavKey((k) => k + 1); }, [tab]);
+
+  useEffect(() => { initNotifications(); }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -53,20 +58,33 @@ export function App() {
     const done = !r.done;
     if (done) showToast('המשימה הושלמה! 🎉');
     await fbToggle(user.uid, id, done);
+    if (done) cancelReminder(id);
+    else scheduleReminder({ ...r, done: false });
   };
 
   const del = async (id: string) => {
     if (!user) return;
     setDetail(null);
     await fbDelete(user.uid, id);
+    cancelReminder(id);
   };
 
-  const addReminder = async (data: Omit<Reminder, 'id' | 'done' | 'doneAt'>) => {
+  const saveReminder = async (data: Omit<Reminder, 'id' | 'done' | 'doneAt'>) => {
     if (!user) return;
     setAdding(false);
     setAddDate(undefined);
-    await fbAddReminder(user.uid, data);
-    showToast('התזכורת נוספה ✨');
+    if (editing) {
+      const id = editing.id;
+      setEditing(null);
+      await fbUpdate(user.uid, id, data);
+      await cancelReminder(id);
+      scheduleReminder({ ...data, id, done: false });
+      showToast('התזכורת עודכנה ✨');
+    } else {
+      const id = await fbAddReminder(user.uid, data);
+      scheduleReminder({ ...data, id, done: false });
+      showToast('התזכורת נוספה ✨');
+    }
   };
 
   if (authState === 'loading') {
@@ -157,10 +175,23 @@ export function App() {
           transition: 'transform 0.45s var(--ease-spring)',
           overflowY: 'auto',
         }}>
-          {adding && <AddScreen onClose={() => { setAdding(false); setAddDate(undefined); }} onSave={addReminder} defaultDate={addDate} />}
+          {adding && (
+            <AddScreen
+              onClose={() => { setAdding(false); setAddDate(undefined); setEditing(null); }}
+              onSave={saveReminder}
+              defaultDate={addDate}
+              editing={editing}
+            />
+          )}
         </div>
 
-        <DetailSheet reminder={detail} onClose={() => setDetail(null)} onToggle={toggle} onDelete={del} />
+        <DetailSheet
+          reminder={detail}
+          onClose={() => setDetail(null)}
+          onToggle={toggle}
+          onDelete={del}
+          onEdit={(r) => { setEditing(r); setAdding(true); }}
+        />
         <ColorSheet open={colorOpen} onClose={() => setColorOpen(false)} seed={seed} setSeed={setSeed} />
         {toast && <Toast message={toast} />}
       </div>
