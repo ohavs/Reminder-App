@@ -17,6 +17,7 @@ export interface Reminder {
   cat: CategoryKey;
   done: boolean;
   doneAt?: string;
+  doneAtMs?: number;
   time?: string;
   repeat?: string;
   place?: string;

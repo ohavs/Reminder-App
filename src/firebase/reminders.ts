@@ -23,6 +23,7 @@ function fromDoc(id: string, data: Record<string, unknown>): Reminder {
     cat:      data.cat      as 'health' | 'work' | 'personal' | 'shopping',
     done:     data.done     as boolean,
     doneAt:   data.doneAt ? (data.doneAt as Timestamp).toDate().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : undefined,
+    doneAtMs: data.doneAt ? (data.doneAt as Timestamp).toMillis() : undefined,
     time:     data.time    as string | undefined,
     repeat:   data.repeat  as string | undefined,
     place:    data.place   as string | undefined,

@@ -12,7 +12,7 @@ import {
 } from './firebase/reminders';
 import type { Scope } from './firebase/reminders';
 import { subscribeToMyLists } from './firebase/lists';
-import { initNotifications, scheduleReminder, cancelReminder } from './services/notifications';
+import { initNotifications, scheduleReminder, cancelReminder, snoozeReminder } from './services/notifications';
 import { registerGeofence, removeGeofence } from './services/geofence';
 import { ListsSheet } from './components/ListsSheet';
 import { BottomBar } from './components/BottomBar';
@@ -113,6 +113,26 @@ export function App() {
       showToast('התזכורת נוספה ✨');
     }
   };
+
+  const snooze = (r: Reminder) => {
+    snoozeReminder(r, 10);
+    showToast('נדחה ב-10 דקות ⏰');
+  };
+
+  // Repeating reminders completed on a previous day come back automatically
+  useEffect(() => {
+    if (!user) return;
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const dow = new Date().getDay();
+    reminders.forEach((r) => {
+      if (!r.done || !r.repeat || r.repeat === 'חד פעמי') return;
+      if (!r.doneAtMs || r.doneAtMs >= startOfToday.getTime()) return;
+      if (r.repeat === 'ימי חול' && (dow === 5 || dow === 6)) return;
+      fbToggle(activeListId ? { kind: 'list', listId: activeListId } : { kind: 'user', uid: user.uid }, r.id, false);
+      scheduleReminder({ ...r, done: false });
+    });
+  }, [reminders, user?.uid, activeListId]);
 
   const afterSave = (r: Reminder) => {
     if (r.kind === 'time') scheduleReminder(r);
@@ -229,6 +249,7 @@ export function App() {
           onToggle={toggle}
           onDelete={del}
           onEdit={(r) => { setEditing(r); setAdding(true); }}
+          onSnooze={snooze}
         />
         <ColorSheet open={colorOpen} onClose={() => setColorOpen(false)} seed={seed} setSeed={setSeed} />
         {user && (

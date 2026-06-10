@@ -106,6 +106,32 @@ function cancelWebTimer(id: string) {
   if (t) { clearTimeout(t); webTimers.delete(id); }
 }
 
+// One-shot notification in N minutes, replacing any pending schedule
+export async function snoozeReminder(r: Reminder, minutes = 10): Promise<void> {
+  if (!(await ensurePermission())) return;
+  const at = new Date(Date.now() + minutes * 60_000);
+  const body = `נדחה ב-${minutes} דקות`;
+
+  if (isNative) {
+    await LocalNotifications.schedule({
+      notifications: [{
+        id: numericId(r.id),
+        title: r.title,
+        body,
+        channelId: 'reminders',
+        schedule: { at, allowWhileIdle: true },
+      }],
+    });
+    return;
+  }
+
+  cancelWebTimer(r.id);
+  webTimers.set(r.id, setTimeout(() => {
+    new Notification(r.title, { body: r.sub ?? 'הגיע הזמן!', icon: '/favicon.svg', dir: 'rtl', lang: 'he' });
+    webTimers.delete(r.id);
+  }, minutes * 60_000));
+}
+
 export async function cancelReminder(id: string): Promise<void> {
   if (isNative) {
     await LocalNotifications.cancel({ notifications: [{ id: numericId(id) }] });

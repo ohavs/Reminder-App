@@ -1,5 +1,5 @@
 import type { Reminder, ToneName } from '../types';
-import { CATEGORIES, CATEGORY_ORDER } from '../data/sampleData';
+import { CATEGORIES, CATEGORY_ORDER, HEB_DAYS_SHORT } from '../data/sampleData';
 import { Card } from '../components/ui/Card';
 import { TopBar } from '../components/ui/TopBar';
 import { SectionTitle } from '../components/ui/SectionTitle';
@@ -35,6 +35,27 @@ export function StatsScreen({ reminders }: StatsScreenProps) {
   const rate = total ? Math.round((done / total) * 100) : 0;
   const urgent = reminders.filter((r) => r.priority === 'urgent').length;
 
+  // Last 7 days of completions (from doneAt timestamps)
+  const DAY = 86_400_000;
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const week = Array.from({ length: 7 }, (_, i) => {
+    const start = todayStart.getTime() - (6 - i) * DAY;
+    const count = reminders.filter((r) => r.doneAtMs && r.doneAtMs >= start && r.doneAtMs < start + DAY).length;
+    return { label: HEB_DAYS_SHORT[new Date(start).getDay()], count };
+  });
+  const weekMax = Math.max(...week.map((d) => d.count), 1);
+  const weekTotal = week.reduce((s, d) => s + d.count, 0);
+
+  // Consecutive days with at least one completion (today may still be empty)
+  let streak = 0;
+  for (let i = 0; i < 365; i++) {
+    const start = todayStart.getTime() - i * DAY;
+    const has = reminders.some((r) => r.doneAtMs && r.doneAtMs >= start && r.doneAtMs < start + DAY);
+    if (has) streak++;
+    else if (i > 0) break;
+  }
+
   const catStats = CATEGORY_ORDER
     .map((cat) => {
       const items = reminders.filter((r) => r.cat === cat);
@@ -66,9 +87,49 @@ export function StatsScreen({ reminders }: StatsScreenProps) {
       />
 
       <div style={{ display: 'flex', gap: 12, marginBottom: 22 }}>
-        <StatBigCard icon="check-circle" tone="primary"  value={done}  label="הושלמו" suffix={total ? `/${total}` : ''} />
-        <StatBigCard icon="trophy"       tone="tertiary" value={rate}  label="אחוז השלמה" suffix="%" />
+        <StatBigCard icon="flame"  tone="error"    value={streak} label="רצף ימים" suffix={streak === 1 ? ' יום' : ' ימים'} />
+        <StatBigCard icon="trophy" tone="tertiary" value={rate}   label="אחוז השלמה" suffix="%" />
       </div>
+
+      {/* Last 7 days */}
+      <Card tone="lowest" className="reveal" style={{ padding: 20, marginBottom: 22 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+          <div style={{ font: '700 17px var(--font-display)', color: 'var(--md-on-surface)' }}>השבוע האחרון</div>
+          <div style={{ font: '600 13px var(--font-body)', color: 'var(--md-primary)' }}>
+            {`${weekTotal} הושלמו · ${done}/${total} סה״כ`}
+          </div>
+        </div>
+        <div style={{
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
+          gap: 8, height: 150, paddingTop: 16,
+        }}>
+          {week.map((d, i) => (
+            <div key={i} style={{
+              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+              gap: 8, height: '100%',
+            }}>
+              <div style={{ flex: 1, width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                <div
+                  className="bar-grow"
+                  style={{
+                    width: '72%',
+                    height: `${Math.max((d.count / weekMax) * 100, d.count > 0 ? 8 : 3)}%`,
+                    borderRadius: 'var(--r-sm)',
+                    background: d.count > 0 ? 'var(--md-primary)' : 'var(--md-surface-container-highest)',
+                    animationDelay: `${i * 70}ms`,
+                  }}
+                />
+              </div>
+              <span style={{
+                font: `${i === 6 ? 800 : 700} 11px var(--font-body)`,
+                color: i === 6 ? 'var(--md-primary)' : 'var(--md-on-surface-variant)',
+              }}>
+                {d.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       {/* Category breakdown */}
       {catStats.length > 0 && (

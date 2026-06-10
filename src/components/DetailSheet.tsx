@@ -11,9 +11,10 @@ interface DetailSheetProps {
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onEdit: (r: Reminder) => void;
+  onSnooze: (r: Reminder) => void;
 }
 
-export function DetailSheet({ reminder, onClose, onToggle, onDelete, onEdit }: DetailSheetProps) {
+export function DetailSheet({ reminder, onClose, onToggle, onDelete, onEdit, onSnooze }: DetailSheetProps) {
   const open = !!reminder;
   return (
     <>
@@ -128,6 +129,13 @@ export function DetailSheet({ reminder, onClose, onToggle, onDelete, onEdit }: D
                 onClick={() => { onEdit(reminder); onClose(); }}
                 style={{ flex: '0 0 auto' }}
               />
+              {reminder.kind === 'time' && !reminder.done && (
+                <Button
+                  variant="outline" icon="bell-off"
+                  onClick={() => { onSnooze(reminder); onClose(); }}
+                  style={{ flex: '0 0 auto' }}
+                />
+              )}
               <Button
                 full icon={reminder.done ? 'replay' : 'check'}
                 onClick={() => { onToggle(reminder.id); onClose(); }}
