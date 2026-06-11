@@ -1,3 +1,5 @@
+import { Icon } from './ui/Icon';
+
 interface ToastProps {
   message: string;
 }
@@ -20,7 +22,7 @@ export function Toast({ message }: ToastProps) {
           boxShadow: '0 6px 20px -4px rgba(0,0,0,.4)',
         }}
       >
-        <span className="msym" style={{ fontSize: 18, color: 'var(--md-primary)' }}>check_circle</span>
+        <Icon name="check-circle" size={17} color="var(--md-primary)" />
         {message}
       </div>
     </div>

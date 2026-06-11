@@ -166,7 +166,7 @@ export function ProfileScreen({ mode, setMode, onOpenColor, seed, user, complete
           <input
             type="range" min="0.3" max="1.8" step="0.1" value={radius}
             onChange={(e) => handleRadiusChange(parseFloat(e.target.value))}
-            style={{ width: '100%', accentColor: 'var(--md-primary)' }}
+            className="ultra-range"
           />
         </div>
       </Card>

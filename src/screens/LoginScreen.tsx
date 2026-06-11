@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { signInWithGoogle, signInAnon } from '../firebase/auth';
+import { Icon } from '../components/ui/Icon';
 import { ClayBell } from '../components/illustrations/ClayBell';
 import { ClayPin } from '../components/illustrations/ClayPin';
 import { ClayCheck } from '../components/illustrations/ClayCheck';
@@ -51,12 +52,14 @@ function LoginForm() {
         }}
       >
         {loading === 'google'
-          ? <span className="msym" style={{ fontSize: 22, color: 'var(--md-primary)', animation: 'fab-pulse 1s infinite' }}>refresh</span>
+          ? <span style={{ animation: 'fab-pulse 1s infinite', display: 'grid', placeItems: 'center' }}>
+              <Icon name="refresh" size={20} color="var(--md-primary)" />
+            </span>
           : <GoogleIcon />}
         {loading === 'google' ? 'מתחבר...' : 'המשך עם Google'}
       </button>
 
-      <Button variant="tonal" full icon="person_outline" onClick={handleAnon}
+      <Button variant="tonal" full icon="user" onClick={handleAnon}
         disabled={loading !== null} style={{ opacity: loading !== null ? 0.6 : 1 }}>
         {loading === 'anon' ? 'מתחבר...' : 'כניסה כאורח'}
       </Button>

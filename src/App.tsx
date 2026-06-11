@@ -15,6 +15,7 @@ import { subscribeToMyLists } from './firebase/lists';
 import { initNotifications, scheduleReminder, cancelReminder, snoozeReminder } from './services/notifications';
 import { registerGeofence, removeGeofence } from './services/geofence';
 import { ListsSheet } from './components/ListsSheet';
+import { Icon } from './components/ui/Icon';
 import { BottomBar } from './components/BottomBar';
 import { SideBar } from './components/SideBar';
 import { DetailSheet } from './components/DetailSheet';
@@ -178,8 +179,8 @@ export function App() {
   if (authState === 'loading') {
     return (
       <div className="app-shell" style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <span className="msym" style={{ fontSize: 52, color: 'var(--md-primary)', animation: 'fab-pulse 1.5s ease-in-out infinite' }}>
-          notifications
+        <span style={{ animation: 'fab-pulse 1.5s ease-in-out infinite', display: 'grid', placeItems: 'center' }}>
+          <Icon name="bell" size={52} color="var(--md-primary)" />
         </span>
       </div>
     );

@@ -8,6 +8,8 @@ import { Button } from '../components/ui/Button';
 import { Chip } from '../components/ui/Chip';
 import { Segmented } from '../components/ui/Segmented';
 import { Icon } from '../components/ui/Icon';
+import { TimeField } from '../components/ui/TimeField';
+import { DateField } from '../components/ui/DateField';
 import { ClayTile } from '../components/illustrations/ClayTile';
 import { LocationPicker } from '../components/LocationPicker';
 import type { GeoPoint } from '../components/LocationPicker';
@@ -174,18 +176,10 @@ export function AddScreen({ onClose, onSave, defaultDate, editing }: AddScreenPr
         {kind === 'time' ? (
           <div className="reveal">
             <FieldLabel icon="clock">שעה</FieldLabel>
-            <input
-              type="time" value={time}
-              onChange={(e) => setTime(e.target.value)}
-              style={{ ...fieldStyle, textAlign: 'start', fontVariantNumeric: 'tabular-nums', fontSize: 22, fontWeight: 800 }}
-            />
+            <TimeField value={time} onChange={setTime} />
             <div style={{ height: 24 }} />
             <FieldLabel icon="calendar">תאריך (אופציונלי)</FieldLabel>
-            <input
-              type="date" value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              style={{ ...fieldStyle, fontSize: 16 }}
-            />
+            <DateField value={dueDate} onChange={setDueDate} />
             <div style={{ height: 24 }} />
             <FieldLabel icon="repeat">חזרתיות</FieldLabel>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: -6 }}>
@@ -243,7 +237,7 @@ export function AddScreen({ onClose, onSave, defaultDate, editing }: AddScreenPr
                 <input
                   type="range" min="100" max="1000" step="50" value={geo.radius}
                   onChange={(e) => setGeo({ ...geo, radius: +e.target.value })}
-                  style={{ width: '100%', accentColor: 'var(--md-primary)' }}
+                  className="ultra-range"
                 />
               </div>
             )}
