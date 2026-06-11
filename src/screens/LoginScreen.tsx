@@ -11,6 +11,8 @@ const FEATURES = [
   { illo: 'check' as const, title: 'פרטיות מלאה',  body: 'הנתונים שלך מוגנים בענן ומוצפנים.' },
 ];
 
+const APP_VERSION = 'v1.1';
+
 function LoginForm() {
   const [loading, setLoading] = useState<'google' | 'anon' | null>(null);
   const [error, setError]     = useState<string | null>(null);
@@ -18,7 +20,11 @@ function LoginForm() {
   const handleGoogle = async () => {
     setError(null); setLoading('google');
     try { await signInWithGoogle(); }
-    catch { setError('ההתחברות נכשלה. נסה שוב.'); setLoading(null); }
+    catch (e) {
+      const msg = e instanceof Error ? e.message : '';
+      setError(`ההתחברות נכשלה. נסה שוב.${msg ? ` (${msg})` : ''}`);
+      setLoading(null);
+    }
   };
 
   const handleAnon = async () => {
@@ -70,6 +76,7 @@ function LoginForm() {
         color: 'var(--md-on-surface-variant)', textAlign: 'center', lineHeight: 1.6,
       }}>
         בהתחברות אתה מסכים לתנאי השימוש. הנתונים שמורים בענן ומוגנים.
+        <span style={{ opacity: 0.55 }}> · {APP_VERSION}</span>
       </div>
     </div>
   );
