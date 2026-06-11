@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "287361295506",
+    "project_id": "reminder-app-eeb53",
+    "storage_bucket": "reminder-app-eeb53.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:287361295506:android:f67584a3d161f5018c324b",
+        "android_client_info": {
+          "package_name": "com.ultra.reminders"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "287361295506-79mnpdpclmjif6cbqm0kj3lrrui70n7s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCOMbO7jRJUMhuTf6SL7ZoMTdc5SjfZvg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "287361295506-79mnpdpclmjif6cbqm0kj3lrrui70n7s.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
