@@ -39,15 +39,27 @@ jobs:
           rm /tmp/sa.json
         env:
           FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-      # Deploy Hosting via the Firebase CLI directly. The FirebaseExtended
-      # action occasionally false-fails on a retry race ("supplied version is
-      # the current active version") even though the deploy succeeded.
+      # Deploy Hosting via the Firebase CLI. A flaky network "premature close"
+      # makes firebase-tools retry the final release POST; the first attempt
+      # already succeeded server-side, so the retry returns 400 "supplied
+      # version ... is the current active version". The site IS deployed in
+      # that case, so we treat that specific error as success.
       - name: Deploy Hosting
         run: |
-          set -o pipefail
           echo "$FIREBASE_SA" > /tmp/sa.json
-          GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json npx firebase-tools deploy \
-            --only hosting --project reminder-app-eeb53 --non-interactive
-          rm /tmp/sa.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json
+          set +e
+          out=$(npx firebase-tools deploy --only hosting \
+            --project reminder-app-eeb53 --non-interactive 2>&1)
+          code=$?
+          echo "$out"
+          rm -f /tmp/sa.json
+          if [ $code -ne 0 ]; then
+            if echo "$out" | grep -q "is the current active version"; then
+              echo "::warning::Hosting release retry race — the version is already live; treating as success."
+              exit 0
+            fi
+            exit $code
+          fi
         env:
           FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
