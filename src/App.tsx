@@ -13,6 +13,7 @@ import {
 import type { Scope } from './firebase/reminders';
 import { subscribeToMyLists } from './firebase/lists';
 import { subscribeToPlaces, addPlace, deletePlace } from './firebase/places';
+import { useWidgetSync } from './hooks/useWidgetSync';
 import { initNotifications, scheduleReminder, cancelReminder, snoozeReminder } from './services/notifications';
 import { registerGeofence, removeGeofence } from './services/geofence';
 import { ListsSheet } from './components/ListsSheet';
@@ -72,6 +73,9 @@ export function App() {
     if (!user) return;
     return subscribeToPlaces(user.uid, setSavedPlaces);
   }, [user?.uid]);
+
+  // Keep the Android home-screen widget in sync (no-op on web)
+  useWidgetSync(user ? { uid: user.uid } : null, lists);
 
   const savePlace = async (place: Omit<SavedPlace, 'id'>) => {
     if (!user) return;
