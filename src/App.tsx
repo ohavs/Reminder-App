@@ -14,7 +14,7 @@ import type { Scope } from './firebase/reminders';
 import { subscribeToMyLists } from './firebase/lists';
 import { subscribeToPlaces, addPlace, deletePlace } from './firebase/places';
 import { useWidgetSync } from './hooks/useWidgetSync';
-import { initNotifications, scheduleReminder, cancelReminder, snoozeReminder } from './services/notifications';
+import { initNotifications, scheduleReminder, cancelReminder, snoozeReminder, ensurePermission } from './services/notifications';
 import { registerGeofence, removeGeofence } from './services/geofence';
 import { ListsSheet } from './components/ListsSheet';
 import { Icon } from './components/ui/Icon';
@@ -200,9 +200,13 @@ export function App() {
     showToast(`יובאו ${valid.length} תזכורות ✨`);
   };
 
-  const afterSave = (r: Reminder) => {
+  const afterSave = async (r: Reminder) => {
     if (r.kind === 'time') scheduleReminder(r);
     else if (r.lat != null && r.lng != null) {
+      // Ensure notification permission (POST_NOTIFICATIONS on Android 13+) so the
+      // geofence alert can actually be shown — place-only users never hit the
+      // time-reminder permission prompt otherwise.
+      await ensurePermission();
       registerGeofence(r, { lat: r.lat, lng: r.lng, radiusMeters: r.radius ?? 200 });
     }
   };

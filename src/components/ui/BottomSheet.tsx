@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 
 interface BottomSheetProps {
@@ -10,79 +10,111 @@ interface BottomSheetProps {
   padding?: string;
 }
 
+const SPRING = 'transform 0.42s cubic-bezier(0.34,1.3,0.5,1)';
+const CLOSE_T = 'transform 0.26s cubic-bezier(0.2,0,0,1)';
+
 /**
  * Shared bottom-sheet shell. Closes on:
  *   • tap on the scrim behind it
- *   • swipe / drag the sheet downward past a threshold
- * The drag only engages when the sheet's own scroll is at the top, so
- * scrollable content (e.g. the lists sheet) still scrolls normally.
+ *   • a downward swipe past a distance/velocity threshold
+ *
+ * The drag is applied straight to the DOM node (no React state per frame) for a
+ * buttery follow, and `touch-action` is set so the browser doesn't hijack the
+ * vertical gesture. Non-scrolling sheets drag from anywhere; scrolling sheets
+ * drag from the grab handle (so their content can still scroll).
  */
 export function BottomSheet({
   open, onClose, children,
   maxWidth = 560, maxHeight, padding = '14px 24px 28px',
 }: BottomSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
-  const startY = useRef(0);
-  const pointer = useRef<number | null>(null);
-  const [drag, setDrag] = useState(0);
-  const [dragging, setDragging] = useState(false);
+  const scrimRef = useRef<HTMLDivElement>(null);
+  const scrollable = !!maxHeight;
+  const g = useRef({ pending: false, active: false, fromHandle: false, id: -1, startY: 0, dy: 0, t0: 0 });
 
-  // Reset any in-flight drag whenever the sheet is dismissed
-  useEffect(() => {
-    if (!open) { setDrag(0); setDragging(false); pointer.current = null; }
+  // Drive base open/closed position imperatively (before paint, so no flash)
+  useLayoutEffect(() => {
+    const el = sheetRef.current, sc = scrimRef.current;
+    if (!el) return;
+    el.style.transition = open ? SPRING : CLOSE_T;
+    el.style.transform = open ? 'translateY(0)' : 'translateY(110%)';
+    if (sc) {
+      sc.style.transition = 'opacity 0.3s cubic-bezier(0.2,0,0,1)';
+      sc.style.opacity = open ? '0.4' : '0';
+    }
   }, [open]);
 
-  const onPointerDown = (e: React.PointerEvent) => {
+  const follow = (dy: number) => {
+    const el = sheetRef.current, sc = scrimRef.current;
+    if (el) { el.style.transition = 'none'; el.style.transform = `translateY(${dy}px)`; }
+    if (sc) { sc.style.transition = 'none'; sc.style.opacity = String(0.4 * Math.max(0, 1 - dy / 600)); }
+  };
+
+  const snapBack = () => {
+    const el = sheetRef.current, sc = scrimRef.current;
+    if (el) { el.style.transition = SPRING; el.style.transform = 'translateY(0)'; }
+    if (sc) { sc.style.transition = 'opacity 0.3s'; sc.style.opacity = '0.4'; }
+  };
+
+  const animateClose = () => {
+    const el = sheetRef.current, sc = scrimRef.current;
+    if (el) { el.style.transition = CLOSE_T; el.style.transform = 'translateY(110%)'; }
+    if (sc) { sc.style.transition = 'opacity 0.26s'; sc.style.opacity = '0'; }
+    window.setTimeout(onClose, 170);
+  };
+
+  const begin = (e: React.PointerEvent, fromHandle = false) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
-    // Only start a dismiss-drag from the top of the content
-    if ((sheetRef.current?.scrollTop ?? 0) > 4) return;
-    startY.current = e.clientY;
-    pointer.current = e.pointerId;
+    g.current = { pending: true, active: false, fromHandle, id: e.pointerId, startY: e.clientY, dy: 0, t0: Date.now() };
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
-    if (pointer.current !== e.pointerId) return;
-    const dy = e.clientY - startY.current;
-    if (dy <= 0) { if (dragging) setDrag(0); return; }
-    if (!dragging) {
-      if (dy < 6) return;             // tiny moves: let taps / clicks through
-      setDragging(true);
+    const s = g.current;
+    if (s.id !== e.pointerId || (!s.pending && !s.active)) return;
+    const dy = e.clientY - s.startY;
+    if (!s.active) {
+      if (dy < 6) return;                      // small move → let taps/clicks through
+      // For scrollable sheets started from the body, only drag when at the top
+      if (scrollable && !s.fromHandle && (sheetRef.current?.scrollTop ?? 0) > 0) {
+        s.pending = false; return;
+      }
+      s.active = true;
       try { sheetRef.current?.setPointerCapture(e.pointerId); } catch { /* ignore */ }
     }
-    setDrag(dy);
+    s.dy = Math.max(0, dy);
+    follow(s.dy);
   };
 
   const onPointerUp = (e: React.PointerEvent) => {
-    if (pointer.current !== e.pointerId) return;
-    pointer.current = null;
-    const shouldClose = drag > 120;
-    setDragging(false);
-    setDrag(0);
-    if (shouldClose) onClose();
+    const s = g.current;
+    if (s.id !== e.pointerId) return;
+    const wasActive = s.active;
+    s.pending = false; s.active = false; s.id = -1;
+    if (!wasActive) return;                     // it was a tap
+    const v = s.dy / Math.max(Date.now() - s.t0, 1);  // px per ms
+    if (s.dy > 110 || v > 0.45) animateClose(); else snapBack();
   };
-
-  const scrimOpacity = open ? 0.4 * Math.max(0, 1 - drag / 500) : 0;
 
   return (
     <>
       <div
+        ref={scrimRef}
         onClick={onClose}
         style={{
           position: 'absolute', inset: 0, background: 'var(--md-scrim)',
-          opacity: scrimOpacity, pointerEvents: open ? 'auto' : 'none',
-          transition: dragging ? 'none' : 'opacity 0.3s var(--ease)', zIndex: 40,
+          opacity: 0, pointerEvents: open ? 'auto' : 'none', zIndex: 40,
         }}
       />
       <div style={{
         position: 'absolute', inset: 0, zIndex: 41,
         display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-        // Transparent to taps so clicks above the sheet fall through to the
-        // scrim (which closes it); the sheet itself re-enables pointer events.
+        // Transparent to taps so clicks above the sheet reach the scrim;
+        // the sheet itself re-enables pointer events.
         pointerEvents: 'none',
       }}>
         <div
           ref={sheetRef}
-          onPointerDown={onPointerDown}
+          onPointerDown={scrollable ? undefined : begin}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
@@ -92,19 +124,24 @@ export function BottomSheet({
             background: 'var(--md-surface-container-high)',
             borderRadius: 'var(--r-xl) var(--r-xl) 0 0',
             padding,
-            transform: open ? `translateY(${drag}px)` : 'translateY(110%)',
-            transition: dragging ? 'none' : 'transform 0.42s var(--ease-spring)',
+            transform: 'translateY(110%)',
             boxShadow: '0 -8px 40px -8px rgba(0,0,0,.3)',
             pointerEvents: 'auto',
-            touchAction: 'pan-y',
+            touchAction: scrollable ? 'pan-y' : 'none',
             overscrollBehavior: 'contain',
           }}
         >
-          <div style={{
-            width: 40, height: 5, borderRadius: 3,
-            background: 'var(--md-outline-variant)', margin: '0 auto 18px',
-            cursor: 'grab', flexShrink: 0,
-          }} />
+          <div
+            onPointerDown={(e) => begin(e, true)}
+            style={{
+              width: 44, height: 5, borderRadius: 3,
+              background: 'var(--md-outline-variant)', margin: '0 auto 18px',
+              cursor: 'grab', flexShrink: 0, touchAction: 'none',
+              // bigger invisible hit area for easy grabbing
+              padding: '10px 40px', boxSizing: 'content-box',
+              backgroundClip: 'content-box',
+            }}
+          />
           {children}
         </div>
       </div>
