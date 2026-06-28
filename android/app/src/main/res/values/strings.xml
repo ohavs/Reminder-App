@@ -4,4 +4,6 @@
     <string name="title_activity_main">ULTRA תזכורות</string>
     <string name="package_name">com.ultra.reminders</string>
     <string name="custom_url_scheme">com.ultra.reminders</string>
+    <string name="widget_label">תזכורות ULTRA</string>
+    <string name="widget_description">רשימת תזכורות עם סימון מהיר — בחר איזו רשימה תוצג.</string>
 </resources>

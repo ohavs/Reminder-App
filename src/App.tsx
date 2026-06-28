@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Reminder, NavTab, ThemeMode, SharedList } from './types';
+import type { Reminder, NavTab, ThemeMode, SharedList, SavedPlace } from './types';
 import { useDynamicColor } from './hooks/useDynamicColor';
 import { useAuth } from './hooks/useAuth';
 import { LoginScreen } from './screens/LoginScreen';
@@ -12,6 +12,8 @@ import {
 } from './firebase/reminders';
 import type { Scope } from './firebase/reminders';
 import { subscribeToMyLists } from './firebase/lists';
+import { subscribeToPlaces, addPlace, deletePlace } from './firebase/places';
+import { useWidgetSync } from './hooks/useWidgetSync';
 import { initNotifications, scheduleReminder, cancelReminder, snoozeReminder } from './services/notifications';
 import { registerGeofence, removeGeofence } from './services/geofence';
 import { ListsSheet } from './components/ListsSheet';
@@ -44,6 +46,7 @@ export function App() {
   const [lists, setLists] = useState<SharedList[]>([]);
   const [activeListId, setActiveListId] = useState<string | null>(null);
   const [listsOpen, setListsOpen] = useState(false);
+  const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>([]);
 
   const scope: Scope = activeListId && user
     ? { kind: 'list', listId: activeListId }
@@ -65,6 +68,34 @@ export function App() {
     if (!user) return;
     return subscribeToMyLists(user.uid, setLists);
   }, [user?.uid]);
+
+  useEffect(() => {
+    if (!user) return;
+    return subscribeToPlaces(user.uid, setSavedPlaces);
+  }, [user?.uid]);
+
+  // Keep the Android home-screen widget in sync (no-op on web)
+  useWidgetSync(user ? { uid: user.uid } : null, lists);
+
+  const savePlace = async (place: Omit<SavedPlace, 'id'>) => {
+    if (!user) return;
+    try {
+      await addPlace(user.uid, place);
+      showToast('המקום נשמר 📍');
+    } catch {
+      showToast('שמירת המקום נכשלה');
+    }
+  };
+
+  const removePlace = async (id: string) => {
+    if (!user) return;
+    try {
+      await deletePlace(user.uid, id);
+      showToast('המקום נמחק');
+    } catch {
+      showToast('מחיקת המקום נכשלה');
+    }
+  };
 
   // Active list was deleted or we were removed — fall back to personal
   useEffect(() => {
@@ -276,6 +307,9 @@ export function App() {
               onSave={saveReminder}
               defaultDate={addDate}
               editing={editing}
+              savedPlaces={savedPlaces}
+              onSavePlace={savePlace}
+              onDeletePlace={removePlace}
             />
           )}
         </div>

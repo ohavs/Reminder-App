@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="widget_bg">#1A1C19</color>
+    <color name="widget_header">#E3E3DC</color>
+    <color name="widget_title">#E3E3DC</color>
+    <color name="widget_sub">#A9ADA3</color>
+    <color name="widget_muted">#8A8F86</color>
+    <color name="widget_check_border">#6F756C</color>
+    <color name="widget_accent_time">#86C99A</color>
+    <color name="widget_accent_place">#6FD0D4</color>
+    <color name="widget_accent_urgent">#F0997F</color>
+    <color name="widget_divider">#22FFFFFF</color>
+</resources>
