@@ -39,9 +39,15 @@ jobs:
           rm /tmp/sa.json
         env:
           FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-      - uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          channelId: live
-          projectId: reminder-app-eeb53
+      # Deploy Hosting via the Firebase CLI directly. The FirebaseExtended
+      # action occasionally false-fails on a retry race ("supplied version is
+      # the current active version") even though the deploy succeeded.
+      - name: Deploy Hosting
+        run: |
+          set -o pipefail
+          echo "$FIREBASE_SA" > /tmp/sa.json
+          GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json npx firebase-tools deploy \
+            --only hosting --project reminder-app-eeb53 --non-interactive
+          rm /tmp/sa.json
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
