@@ -10,4 +10,8 @@
     <color name="widget_accent_place">#6FD0D4</color>
     <color name="widget_accent_urgent">#F0997F</color>
     <color name="widget_divider">#22FFFFFF</color>
+    <color name="widget_card">#262A25</color>
+    <color name="widget_today_bg">#86C99A</color>
+    <color name="widget_today_text">#10231A</color>
+    <color name="widget_dot">#86C99A</color>
 </resources>

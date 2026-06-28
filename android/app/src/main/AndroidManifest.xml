@@ -42,6 +42,24 @@
             android:permission="android.permission.BIND_REMOTEVIEWS"
             android:exported="false" />
 
+        <!-- Calendar widget -->
+        <receiver
+            android:name=".CalendarWidgetProvider"
+            android:label="@string/widget_calendar_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/calendar_widget_info" />
+        </receiver>
+
+        <service
+            android:name=".CalendarWidgetService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"
+            android:exported="false" />
+
         <activity
             android:name=".WidgetConfigActivity"
             android:theme="@style/AppTheme.NoActionBar"

@@ -22,6 +22,7 @@ public class WidgetBridge extends Plugin {
         JSArray reminders = call.getArray("reminders");
         WidgetData.saveSnapshot(getContext(), lists, reminders);
         ReminderWidgetProvider.refreshAll(getContext());
+        CalendarWidgetProvider.refreshAll(getContext());
         call.resolve();
     }
 

@@ -14,23 +14,46 @@
         android:gravity="center_vertical"
         android:paddingBottom="10dp">
 
-        <TextView
-            android:id="@+id/widget_title"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="@color/widget_header"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:text="תזכורות" />
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_header"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="תזכורות" />
+
+            <TextView
+                android:id="@+id/widget_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_sub"
+                android:textSize="12sp"
+                android:maxLines="1"
+                android:text="" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/widget_switch"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:padding="7dp"
+            android:src="@drawable/ic_widget_list"
+            android:contentDescription="החלפת רשימה" />
 
         <ImageView
             android:id="@+id/widget_refresh"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:padding="6dp"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:padding="7dp"
             android:src="@drawable/ic_widget_refresh"
             android:contentDescription="רענון" />
     </LinearLayout>
@@ -41,7 +64,7 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:divider="@android:color/transparent"
-        android:dividerHeight="6dp"
+        android:dividerHeight="8dp"
         android:scrollbars="none" />
 
     <TextView
@@ -53,5 +76,5 @@
         android:textColor="@color/widget_sub"
         android:textSize="14sp"
         android:visibility="gone"
-        android:text="אין תזכורות ברשימה זו ✓" />
+        android:text="הכל בוצע — אין תזכורות פתוחות ✓" />
 </LinearLayout>

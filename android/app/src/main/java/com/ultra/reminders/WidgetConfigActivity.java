@@ -63,8 +63,9 @@ public class WidgetConfigActivity extends Activity {
             empty.setVisibility(View.GONE);
         }
 
+        list.setDivider(null);
         list.setAdapter(new ArrayAdapter<>(
-            this, android.R.layout.simple_list_item_1, names));
+            this, R.layout.widget_config_item, R.id.config_item_text, names));
         list.setOnItemClickListener((AdapterView<?> parent, View v, int pos, long idn) -> commit(listIds.get(pos)));
     }
 

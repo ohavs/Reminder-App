@@ -181,8 +181,8 @@ export function ProfileScreen({ mode, setMode, onOpenColor, seed, user, complete
         />
         <div style={{ height: 1, background: 'var(--md-outline-variant)', marginInline: 16 }} />
         <SettingRow
-          icon="lock" tone="primary" title="עיבוד מקומי בלבד"
-          sub="הנתונים לא יוצאים מהמכשיר"
+          icon="lock" tone="primary" title="סנכרון מאובטח בענן"
+          sub="התזכורות נשמרות ב-Firebase ומסונכרנות בין המכשירים שלך, מוצפנות בתעבורה"
           trailing={<Icon name="shield-check" size={22} color="var(--md-primary)" />}
         />
         <div style={{ height: 1, background: 'var(--md-outline-variant)', marginInline: 16 }} />

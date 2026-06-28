@@ -6,4 +6,6 @@
     <string name="custom_url_scheme">com.ultra.reminders</string>
     <string name="widget_label">תזכורות ULTRA</string>
     <string name="widget_description">רשימת תזכורות עם סימון מהיר — בחר איזו רשימה תוצג.</string>
+    <string name="widget_calendar_label">לוח שנה ULTRA</string>
+    <string name="widget_calendar_description">לוח חודשי עם סימון הימים שיש בהם תזכורות.</string>
 </resources>

@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
+import { useBackClose } from '../hooks/useBackClose';
 import type { Reminder, ReminderKind, ReminderPriority, ReminderTrigger, CategoryKey, SavedPlace } from '../types';
 import { REPEAT_OPTS, ICON_CHOICES, CATEGORIES, CATEGORY_ORDER } from '../data/sampleData';
 import { TopBar } from '../components/ui/TopBar';
@@ -126,6 +127,16 @@ export function AddScreen({
     setSearching(false);
   };
 
+  // Unsaved-changes guard for the back button / cancel
+  const snapshot = () => JSON.stringify({ title, icon, kind, time, dueDate, place, trigger, repeat, priority, cat, geo });
+  const initialRef = useRef<string | null>(null);
+  if (initialRef.current === null) initialRef.current = snapshot();
+  const guardClose = () => initialRef.current === snapshot() || window.confirm('יש שינויים שלא נשמרו. לצאת ולבטל אותם?');
+  const attemptClose = () => { if (guardClose()) onClose(); };
+
+  // Android back / edge-swipe closes the screen (with the same guard)
+  useBackClose(true, onClose, guardClose);
+
   const handleSave = () => {
     onSave({
       title: title.trim() || 'תזכורת חדשה',
@@ -147,7 +158,7 @@ export function AddScreen({
   return (
     <div className="screen-pad" style={{ paddingBottom: 0, display: 'flex', flexDirection: 'column' }}>
       <TopBar
-        leading={<IconButton icon="x" onClick={onClose} label="סגור" />}
+        leading={<IconButton icon="x" onClick={attemptClose} label="סגור" />}
         title={
           <div style={{ font: '800 22px var(--font-display)', color: 'var(--md-on-surface)' }}>
             {editing ? 'עריכת תזכורת' : 'תזכורת חדשה'}
@@ -401,8 +412,14 @@ export function AddScreen({
         position: 'sticky', bottom: 0, marginTop: 28,
         padding: '16px 0 22px',
         background: 'linear-gradient(to top, var(--md-surface) 70%, transparent)',
+        display: 'flex', gap: 12,
       }}>
-        <Button full icon="check" onClick={handleSave}>{editing ? 'שמירת שינויים' : 'שמירת תזכורת'}</Button>
+        <Button variant="outline" icon="x" onClick={attemptClose} style={{ flex: '0 0 auto' }}>
+          ביטול
+        </Button>
+        <Button full icon="check" onClick={handleSave} style={{ flex: 1 }}>
+          {editing ? 'שמירת שינויים' : 'שמירת תזכורת'}
+        </Button>
       </div>
     </div>
   );

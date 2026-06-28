@@ -79,6 +79,11 @@ public class ReminderWidgetProvider extends AppWidgetProvider {
         RemoteViews views = new RemoteViews(ctx.getPackageName(), R.layout.widget_reminders);
 
         views.setTextViewText(R.id.widget_title, WidgetData.listName(ctx, listId));
+        int open = WidgetData.openCount(ctx, listId);
+        views.setTextViewText(R.id.widget_subtitle,
+            open == 0 ? "הכל בוצע ✓"
+            : open == 1 ? "תזכורת אחת פתוחה"
+            : open + " תזכורות פתוחות");
 
         // Collection adapter — a fresh intent per widget so each shows its own list
         Intent svc = new Intent(ctx, ReminderWidgetService.class);
@@ -96,8 +101,9 @@ public class ReminderWidgetProvider extends AppWidgetProvider {
             ctx, appWidgetId, toggle, pendingFlags(true));
         views.setPendingIntentTemplate(R.id.widget_list, template);
 
-        // Header: open the app
+        // Header: open the app; controls: switch list + refresh
         views.setOnClickPendingIntent(R.id.widget_header, openAppIntent(ctx, appWidgetId));
+        views.setOnClickPendingIntent(R.id.widget_switch, configIntent(ctx, appWidgetId));
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshIntent(ctx, appWidgetId));
 
         mgr.updateAppWidget(appWidgetId, views);
@@ -108,6 +114,14 @@ public class ReminderWidgetProvider extends AppWidgetProvider {
         Intent i = new Intent(ctx, MainActivity.class);
         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         return PendingIntent.getActivity(ctx, 2000 + appWidgetId, i, pendingFlags(false));
+    }
+
+    private static PendingIntent configIntent(Context ctx, int appWidgetId) {
+        Intent i = new Intent(ctx, WidgetConfigActivity.class);
+        i.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+        i.setData(Uri.parse("ultra://widget/config/" + appWidgetId));
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        return PendingIntent.getActivity(ctx, 4000 + appWidgetId, i, pendingFlags(false));
     }
 
     private static PendingIntent refreshIntent(Context ctx, int appWidgetId) {

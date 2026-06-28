@@ -19,6 +19,7 @@ public final class WidgetData {
     private static final String KEY_SNAPSHOT = "snapshot";
     private static final String KEY_PENDING = "pending";
     private static final String LIST_PREFIX = "list_";
+    private static final String CAL_PREFIX = "caloffset_";
 
     public static final String PERSONAL = "personal";
 
@@ -75,6 +76,16 @@ public final class WidgetData {
         return pending;
     }
 
+    public static int openCount(Context ctx, String listId) {
+        JSONArray all = getReminders(ctx);
+        int n = 0;
+        for (int i = 0; i < all.length(); i++) {
+            JSONObject r = all.optJSONObject(i);
+            if (r != null && listId.equals(r.optString("listId")) && !r.optBoolean("done")) n++;
+        }
+        return n;
+    }
+
     public static String listName(Context ctx, String listId) {
         JSONArray lists = getLists(ctx);
         for (int i = 0; i < lists.length(); i++) {
@@ -95,7 +106,20 @@ public final class WidgetData {
     }
 
     public static void removeWidget(Context ctx, int appWidgetId) {
-        prefs(ctx).edit().remove(LIST_PREFIX + appWidgetId).apply();
+        prefs(ctx).edit()
+            .remove(LIST_PREFIX + appWidgetId)
+            .remove(CAL_PREFIX + appWidgetId)
+            .apply();
+    }
+
+    // ---- Calendar widget: per-widget month offset --------------------------
+
+    public static int getCalOffset(Context ctx, int appWidgetId) {
+        return prefs(ctx).getInt(CAL_PREFIX + appWidgetId, 0);
+    }
+
+    public static void setCalOffset(Context ctx, int appWidgetId, int offset) {
+        prefs(ctx).edit().putInt(CAL_PREFIX + appWidgetId, offset).apply();
     }
 
     // ---- Pending toggles (write-back queue) -------------------------------
