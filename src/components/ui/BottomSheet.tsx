@@ -76,7 +76,9 @@ export function BottomSheet({
       <div style={{
         position: 'absolute', inset: 0, zIndex: 41,
         display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-        pointerEvents: open ? 'auto' : 'none',
+        // Transparent to taps so clicks above the sheet fall through to the
+        // scrim (which closes it); the sheet itself re-enables pointer events.
+        pointerEvents: 'none',
       }}>
         <div
           ref={sheetRef}
