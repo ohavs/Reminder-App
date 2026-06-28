@@ -51,3 +51,12 @@ export interface AppearanceSettings {
   fontPair: FontPair;
   radius: number;
 }
+
+export interface SavedPlace {
+  id: string;
+  name: string;      // friendly label, e.g. "בית", "עבודה"
+  address?: string;  // the searched/entered address text
+  lat: number;
+  lng: number;
+  radius: number;    // meters
+}

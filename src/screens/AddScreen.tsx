@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
-import type { Reminder, ReminderKind, ReminderPriority, ReminderTrigger, CategoryKey } from '../types';
+import type { Reminder, ReminderKind, ReminderPriority, ReminderTrigger, CategoryKey, SavedPlace } from '../types';
 import { REPEAT_OPTS, ICON_CHOICES, CATEGORIES, CATEGORY_ORDER } from '../data/sampleData';
 import { TopBar } from '../components/ui/TopBar';
 import { IconButton } from '../components/ui/IconButton';
@@ -63,9 +63,15 @@ interface AddScreenProps {
   onSave: (data: NewReminder) => void;
   defaultDate?: string;
   editing?: Reminder | null;
+  savedPlaces?: SavedPlace[];
+  onSavePlace?: (place: Omit<SavedPlace, 'id'>) => void;
+  onDeletePlace?: (id: string) => void;
 }
 
-export function AddScreen({ onClose, onSave, defaultDate, editing }: AddScreenProps) {
+export function AddScreen({
+  onClose, onSave, defaultDate, editing,
+  savedPlaces = [], onSavePlace, onDeletePlace,
+}: AddScreenProps) {
   const [title, setTitle] = useState(editing?.title ?? '');
   const [icon, setIcon] = useState(editing?.icon ?? 'bell');
   const [kind, setKind] = useState<ReminderKind>(editing?.kind ?? 'time');
@@ -82,6 +88,29 @@ export function AddScreen({ onClose, onSave, defaultDate, editing }: AddScreenPr
       : null,
   );
   const [searching, setSearching] = useState(false);
+  const [placeName, setPlaceName] = useState('');
+  const [savingPlace, setSavingPlace] = useState(false);
+
+  // A saved place roughly at the current pin (so we don't offer to re-save it)
+  const matchedPlace = geo
+    ? savedPlaces.find(
+        (p) => Math.abs(p.lat - geo.lat) < 1e-4 && Math.abs(p.lng - geo.lng) < 1e-4,
+      )
+    : undefined;
+
+  const selectSavedPlace = (p: SavedPlace) => {
+    setPlace(p.name);
+    setGeo({ lat: p.lat, lng: p.lng, radius: p.radius });
+    setSavingPlace(false);
+  };
+
+  const handleSavePlace = () => {
+    if (!geo || !onSavePlace) return;
+    const name = placeName.trim() || place.trim() || 'מקום שמור';
+    onSavePlace({ name, address: place.trim() || undefined, lat: geo.lat, lng: geo.lng, radius: geo.radius });
+    setPlaceName('');
+    setSavingPlace(false);
+  };
 
   const searchPlace = async () => {
     const q = place.trim();
@@ -191,6 +220,64 @@ export function AddScreen({ onClose, onSave, defaultDate, editing }: AddScreenPr
         ) : (
           <div className="reveal">
             <FieldLabel icon="map-pin">מיקום</FieldLabel>
+
+            {savedPlaces.length > 0 && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{
+                  font: '600 12px var(--font-body)', color: 'var(--md-on-surface-variant)',
+                  marginBottom: 8,
+                }}>
+                  מקומות שמורים
+                </div>
+                <div className="hide-scroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
+                  {savedPlaces.map((p) => {
+                    const active = matchedPlace?.id === p.id;
+                    return (
+                      <div
+                        key={p.id}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0,
+                          height: 40, padding: '0 6px 0 14px', borderRadius: 'var(--r-pill)',
+                          border: active ? 'none' : '1.5px solid var(--md-outline-variant)',
+                          background: active ? 'var(--md-secondary-container)' : 'transparent',
+                          color: active ? 'var(--md-on-secondary-container)' : 'var(--md-on-surface-variant)',
+                          transition: 'all 0.2s var(--ease)',
+                        }}
+                      >
+                        <button
+                          onClick={() => selectSavedPlace(p)}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 6,
+                            border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
+                            color: 'inherit', font: '600 14px/1 var(--font-body)',
+                            WebkitTapHighlightColor: 'transparent',
+                          }}
+                        >
+                          <Icon name={active ? 'check' : 'location'} size={16} />
+                          {p.name}
+                        </button>
+                        {onDeletePlace && (
+                          <button
+                            onClick={() => onDeletePlace(p.id)}
+                            aria-label={`מחק ${p.name}`}
+                            style={{
+                              width: 24, height: 24, borderRadius: '50%', border: 'none', flexShrink: 0,
+                              display: 'grid', placeItems: 'center', cursor: 'pointer',
+                              background: 'color-mix(in oklab, var(--md-on-surface) 8%, transparent)',
+                              color: 'var(--md-on-surface-variant)',
+                              WebkitTapHighlightColor: 'transparent',
+                            }}
+                          >
+                            <Icon name="x" size={13} />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
               <input
                 value={place}
@@ -239,6 +326,50 @@ export function AddScreen({ onClose, onSave, defaultDate, editing }: AddScreenPr
                   onChange={(e) => setGeo({ ...geo, radius: +e.target.value })}
                   className="ultra-range"
                 />
+              </div>
+            )}
+
+            {geo && onSavePlace && !matchedPlace && (
+              <div style={{ marginBottom: 14 }}>
+                {!savingPlace ? (
+                  <button
+                    onClick={() => { setPlaceName(place.trim()); setSavingPlace(true); }}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 7,
+                      height: 44, padding: '0 18px', borderRadius: 'var(--r-pill)',
+                      border: '1.5px dashed var(--md-outline-variant)', cursor: 'pointer',
+                      background: 'transparent', color: 'var(--md-primary)',
+                      font: '600 14px var(--font-body)', WebkitTapHighlightColor: 'transparent',
+                    }}
+                  >
+                    <Icon name="star" size={17} />
+                    שמור מקום זה
+                  </button>
+                ) : (
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      value={placeName}
+                      onChange={(e) => setPlaceName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleSavePlace(); }}
+                      placeholder="שם למקום (בית, עבודה...)"
+                      autoFocus
+                      style={{ ...fieldStyle, flex: 1, height: 48 }}
+                    />
+                    <Button icon="check" onClick={handleSavePlace} style={{ height: 48, padding: '0 18px' }}>
+                      שמור
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {matchedPlace && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 7, marginBottom: 14,
+                font: '600 13px var(--font-body)', color: 'var(--md-on-surface-variant)',
+              }}>
+                <Icon name="check-circle" size={16} color="var(--md-primary)" />
+                המקום שמור בשם "{matchedPlace.name}"
               </div>
             )}
 

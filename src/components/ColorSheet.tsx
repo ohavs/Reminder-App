@@ -3,6 +3,7 @@ import { SEED_COLORS } from '../data/sampleData';
 import { hexToOklch, oklchHueToHex } from '../theme/dynamicColor';
 import { Button } from './ui/Button';
 import { Icon } from './ui/Icon';
+import { BottomSheet } from './ui/BottomSheet';
 
 interface ColorSheetProps {
   open: boolean;
@@ -27,35 +28,7 @@ export function ColorSheet({ open, onClose, seed, setSeed }: ColorSheetProps) {
   };
 
   return (
-    <>
-      <div
-        onClick={onClose}
-        style={{
-          position: 'absolute', inset: 0, background: 'var(--md-scrim)',
-          opacity: open ? 0.4 : 0, pointerEvents: open ? 'auto' : 'none',
-          transition: 'opacity 0.3s var(--ease)', zIndex: 40,
-        }}
-      />
-      <div style={{
-        position: 'absolute', inset: 0, zIndex: 41,
-        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-        pointerEvents: open ? 'auto' : 'none',
-      }}>
-        <div style={{
-          width: '100%', maxWidth: 520,
-          background: 'var(--md-surface-container-high)',
-          borderRadius: 'var(--r-xl) var(--r-xl) 0 0',
-          padding: '14px 22px 32px',
-          transform: open ? 'translateY(0)' : 'translateY(110%)',
-          transition: 'transform 0.42s var(--ease-spring)',
-          boxShadow: '0 -8px 40px -8px rgba(0,0,0,.3)',
-          pointerEvents: 'auto',
-        }}>
-        <div style={{
-          width: 36, height: 4, borderRadius: 2,
-          background: 'var(--md-outline-variant)', margin: '0 auto 18px',
-        }} />
-
+    <BottomSheet open={open} onClose={onClose} maxWidth={520} padding="14px 22px 32px">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
           <Icon name="palette" size={24} color="var(--md-primary)" />
           <h3 style={{ font: '800 20px var(--font-display)', color: 'var(--md-on-surface)', margin: 0 }}>
@@ -112,8 +85,6 @@ export function ColorSheet({ open, onClose, seed, setSeed }: ColorSheetProps) {
         <div style={{ marginTop: 22 }}>
           <Button full onClick={onClose}>סיום</Button>
         </div>
-        </div>
-      </div>
-    </>
+    </BottomSheet>
   );
 }
