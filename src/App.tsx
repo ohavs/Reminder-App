@@ -14,6 +14,9 @@ import type { Scope } from './firebase/reminders';
 import { subscribeToMyLists } from './firebase/lists';
 import { subscribeToPlaces, addPlace, deletePlace } from './firebase/places';
 import { useWidgetSync } from './hooks/useWidgetSync';
+import { checkForUpdate } from './services/appUpdate';
+import type { UpdateInfo } from './services/appUpdate';
+import { UpdateBanner } from './components/UpdateBanner';
 import { initNotifications, scheduleReminder, cancelReminder, snoozeReminder, ensurePermission } from './services/notifications';
 import { registerGeofence, removeGeofence } from './services/geofence';
 import { ListsSheet } from './components/ListsSheet';
@@ -47,6 +50,8 @@ export function App() {
   const [activeListId, setActiveListId] = useState<string | null>(null);
   const [listsOpen, setListsOpen] = useState(false);
   const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>([]);
+  const [update, setUpdate] = useState<UpdateInfo | null>(null);
+  const [updateDismissed, setUpdateDismissed] = useState(false);
 
   const scope: Scope = activeListId && user
     ? { kind: 'list', listId: activeListId }
@@ -55,6 +60,9 @@ export function App() {
   useEffect(() => { setNavKey((k) => k + 1); }, [tab]);
 
   useEffect(() => { initNotifications(); }, []);
+
+  // Check for a newer side-loaded APK (native Android only; no-op elsewhere)
+  useEffect(() => { checkForUpdate().then(setUpdate); }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -335,6 +343,13 @@ export function App() {
             lists={lists}
             activeListId={activeListId}
             onSelect={setActiveListId}
+            showToast={showToast}
+          />
+        )}
+        {update && !updateDismissed && (
+          <UpdateBanner
+            info={update}
+            onDismiss={() => setUpdateDismissed(true)}
             showToast={showToast}
           />
         )}

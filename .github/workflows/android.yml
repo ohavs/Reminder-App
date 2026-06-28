@@ -13,6 +13,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so the commit count → versionCode is monotonic
+
+      - name: Compute version
+        run: |
+          COUNT=$(git rev-list --count HEAD)
+          echo "APP_VERSION_CODE=$COUNT" >> "$GITHUB_ENV"
+          echo "APP_VERSION_NAME=1.1.$COUNT" >> "$GITHUB_ENV"
 
       - uses: actions/setup-node@v4
         with:
@@ -50,7 +58,8 @@ jobs:
         run: |
           set -o pipefail
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon 2>&1 | tee gradle.log || {
+          ./gradlew assembleDebug --no-daemon \
+            -PappVersionCode=$APP_VERSION_CODE -PappVersionName=$APP_VERSION_NAME 2>&1 | tee gradle.log || {
             while IFS= read -r line; do echo "::error::gradle: $line"; done < <(grep -E "error:|FAILURE|Caused by" gradle.log | head -10)
             exit 1
           }
@@ -65,6 +74,18 @@ jobs:
       - name: Rename APK
         run: cp android/app/build/outputs/apk/debug/app-debug.apk ultra-reminders.apk
 
+      - name: Write update manifest
+        run: |
+          cat > update.json <<EOF
+          {
+            "versionCode": ${APP_VERSION_CODE},
+            "versionName": "${APP_VERSION_NAME}",
+            "url": "https://github.com/ohavs/Reminder-App/releases/download/latest/ultra-reminders.apk",
+            "notes": "גרסה ${APP_VERSION_NAME} זמינה"
+          }
+          EOF
+          cat update.json
+
       - name: Publish "latest" release with APK
         uses: softprops/action-gh-release@v2
         with:
@@ -72,4 +93,6 @@ jobs:
           name: "ULTRA תזכורות — גרסה אחרונה"
           body: "APK עדכני שנבנה אוטומטית מה-main. הורד את ultra-reminders.apk והתקן."
           prerelease: true
-          files: ultra-reminders.apk
+          files: |
+            ultra-reminders.apk
+            update.json
