@@ -26,7 +26,10 @@ public class CalendarWidgetProvider extends AppWidgetProvider {
         AppWidgetManager mgr = AppWidgetManager.getInstance(ctx);
         int[] ids = mgr.getAppWidgetIds(new ComponentName(ctx, CalendarWidgetProvider.class));
         for (int id : ids) updateWidget(ctx, mgr, id);
-        if (ids.length > 0) mgr.notifyAppWidgetViewDataChanged(ids, R.id.cal_grid);
+        if (ids.length > 0) {
+            mgr.notifyAppWidgetViewDataChanged(ids, R.id.cal_grid);
+            mgr.notifyAppWidgetViewDataChanged(ids, R.id.cal_list);
+        }
     }
 
     @Override
@@ -71,11 +74,24 @@ public class CalendarWidgetProvider extends AppWidgetProvider {
         String label = new SimpleDateFormat("MMMM yyyy", new Locale("he")).format(c.getTime());
         v.setTextViewText(R.id.cal_month, label);
 
+        PendingIntent openApp = openAppTemplate(ctx, appWidgetId);
+
+        // Month grid — tapping a day opens the app
         Intent svc = new Intent(ctx, CalendarWidgetService.class);
         svc.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
         svc.putExtra("offset", offset);
         svc.setData(Uri.parse(svc.toUri(Intent.URI_INTENT_SCHEME)));
         v.setRemoteAdapter(R.id.cal_grid, svc);
+        v.setPendingIntentTemplate(R.id.cal_grid, openApp);
+
+        // Scrollable list of this month's reminders below the grid
+        Intent listSvc = new Intent(ctx, CalendarListService.class);
+        listSvc.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+        listSvc.putExtra("offset", offset);
+        listSvc.setData(Uri.parse(listSvc.toUri(Intent.URI_INTENT_SCHEME)));
+        v.setRemoteAdapter(R.id.cal_list, listSvc);
+        v.setEmptyView(R.id.cal_list, R.id.cal_list_empty);
+        v.setPendingIntentTemplate(R.id.cal_list, openApp);
 
         v.setOnClickPendingIntent(R.id.cal_prev, navIntent(ctx, appWidgetId, ACTION_PREV));
         v.setOnClickPendingIntent(R.id.cal_next, navIntent(ctx, appWidgetId, ACTION_NEXT));
@@ -83,6 +99,15 @@ public class CalendarWidgetProvider extends AppWidgetProvider {
 
         mgr.updateAppWidget(appWidgetId, v);
         mgr.notifyAppWidgetViewDataChanged(appWidgetId, R.id.cal_grid);
+        mgr.notifyAppWidgetViewDataChanged(appWidgetId, R.id.cal_list);
+    }
+
+    private static PendingIntent openAppTemplate(Context ctx, int id) {
+        Intent i = new Intent(ctx, MainActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) flags |= PendingIntent.FLAG_MUTABLE;
+        return PendingIntent.getActivity(ctx, 7000 + id, i, flags);
     }
 
     private static PendingIntent navIntent(Context ctx, int id, String action) {

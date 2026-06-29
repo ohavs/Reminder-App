@@ -77,6 +77,7 @@ public class CalendarWidgetService extends RemoteViewsService {
             cell.setTextColor(R.id.cell_day,
                 ctx.getColor(isToday ? R.color.widget_today_text : R.color.widget_title));
             cell.setViewVisibility(R.id.cell_dot, hasRem && !isToday ? View.VISIBLE : View.GONE);
+            cell.setOnClickFillInIntent(R.id.cell_root, new Intent());
             return cell;
         }
 

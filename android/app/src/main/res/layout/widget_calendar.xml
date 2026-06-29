@@ -61,11 +61,40 @@
     <GridView
         android:id="@+id/cal_grid"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="216dp"
         android:numColumns="7"
         android:layoutDirection="rtl"
         android:stretchMode="columnWidth"
         android:gravity="center"
         android:scrollbars="none" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="תזכורות החודש"
+        android:textColor="@color/widget_sub"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:paddingTop="8dp"
+        android:paddingBottom="6dp" />
+
+    <ListView
+        android:id="@+id/cal_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="0dp"
+        android:scrollbars="none" />
+
+    <TextView
+        android:id="@+id/cal_list_empty"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:textColor="@color/widget_sub"
+        android:textSize="13sp"
+        android:visibility="gone"
+        android:text="אין תזכורות החודש" />
 </LinearLayout>
