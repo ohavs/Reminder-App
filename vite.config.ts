@@ -6,6 +6,11 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      // The Android app loads the web over-the-air from Hosting, so the
+      // precaching service worker added no value and a stale precached shell
+      // could leave a blank screen after a deploy. Ship a self-destroying SW
+      // that unregisters itself and clears caches on every device.
+      selfDestroying: true,
       registerType: 'autoUpdate',
       manifest: {
         name: 'ULTRA · תזכורות',
