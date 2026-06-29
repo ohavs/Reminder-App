@@ -21,12 +21,14 @@
         android:textSize="14sp"
         android:text="" />
 
-    <View
+    <!-- RemoteViews doesn't allow a bare <View>; use ImageView for the dot -->
+    <ImageView
         android:id="@+id/cell_dot"
-        android:layout_width="5dp"
-        android:layout_height="5dp"
+        android:layout_width="6dp"
+        android:layout_height="6dp"
         android:layout_gravity="bottom|center_horizontal"
         android:layout_marginBottom="5dp"
-        android:background="@drawable/widget_dot_circle"
-        android:visibility="gone" />
+        android:src="@drawable/widget_dot_circle"
+        android:visibility="gone"
+        android:contentDescription="@null" />
 </FrameLayout>

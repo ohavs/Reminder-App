@@ -84,21 +84,21 @@ export function CalendarScreen({ reminders, onOpen, onToggle, onAdd }: CalendarS
         </div>
 
         {/* Calendar grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', rowGap: 2, columnGap: 4 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', columnGap: 4, rowGap: 4 }}>
           {cells.map((d, idx) => {
-            if (d === null) return <div key={`e${idx}`} style={{ height: 60 }} />;
+            if (d === null) return <div key={`e${idx}`} style={{ aspectRatio: '1' }} />;
             const isSel = d === sel;
             const isToday = isCurrentMonth && d === today.getDate();
             const count = dotMap[dateStr(d)] || 0;
             return (
               <div
                 key={d}
-                style={{ height: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}
+                style={{ position: 'relative', aspectRatio: '1', display: 'grid', placeItems: 'center' }}
               >
                 <button
                   onClick={() => setSel(d)}
                   style={{
-                    width: 44, height: 44, flexShrink: 0,
+                    width: 42, height: 42,
                     borderRadius: isSel ? 'var(--r-sm)' : '50%',
                     border: isToday && !isSel ? '2px solid var(--md-primary)' : 'none',
                     cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0,
@@ -118,8 +118,9 @@ export function CalendarScreen({ reminders, onOpen, onToggle, onAdd }: CalendarS
                 </button>
                 {count > 0 && (
                   <span style={{
-                    width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-                    background: isSel ? 'var(--md-primary)' : 'var(--md-tertiary)',
+                    position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)',
+                    width: 6, height: 6, borderRadius: '50%',
+                    background: isSel ? 'var(--md-on-primary)' : 'var(--md-tertiary)',
                   }} />
                 )}
               </div>

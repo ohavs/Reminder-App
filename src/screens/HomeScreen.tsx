@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Reminder, CategoryKey, ThemeMode, SharedList } from '../types';
 import { CATEGORIES, CATEGORY_ORDER } from '../data/sampleData';
 import { Card } from '../components/ui/Card';
@@ -161,7 +161,19 @@ export function HomeScreen({
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'בוקר טוב' : hour < 18 ? 'צהריים טובים' : 'ערב טוב';
 
-  const shown = filter === 'all' ? reminders : reminders.filter((r) => r.cat === filter);
+  // Filters are derived from what's actually in the current list — not a fixed
+  // set. Only categories that have reminders here are offered, and the row is
+  // hidden when there's nothing meaningful to filter (0–1 categories).
+  const presentCats = CATEGORY_ORDER.filter((c) => reminders.some((r) => r.cat === c));
+  const showFilters = presentCats.length >= 2;
+
+  // Reset the filter when it no longer applies (e.g. switched to another list)
+  useEffect(() => {
+    if (filter !== 'all' && !presentCats.includes(filter)) setFilter('all');
+  }, [filter, presentCats.join(',')]);
+
+  const effectiveFilter = filter !== 'all' && presentCats.includes(filter) ? filter : 'all';
+  const shown = effectiveFilter === 'all' ? reminders : reminders.filter((r) => r.cat === effectiveFilter);
   const groups = CATEGORY_ORDER
     .map((c) => ({ cat: c, items: shown.filter((r) => r.cat === c) }))
     .filter((g) => g.items.length > 0);
@@ -273,14 +285,16 @@ export function HomeScreen({
       <SectionTitle>
         {activeListId ? (lists.find((l) => l.id === activeListId)?.name ?? 'רשימה משותפת') : 'המשימות שלי'}
       </SectionTitle>
-      <div className="hide-scroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, marginBottom: 4 }}>
-        <Chip selected={filter === 'all'} icon="apps" onClick={() => setFilter('all')}>הכל</Chip>
-        {CATEGORY_ORDER.map((c) => (
-          <Chip key={c} selected={filter === c} icon={CATEGORIES[c].icon} onClick={() => setFilter(c)}>
-            {CATEGORIES[c].label}
-          </Chip>
-        ))}
-      </div>
+      {showFilters && (
+        <div className="hide-scroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, marginBottom: 4 }}>
+          <Chip selected={effectiveFilter === 'all'} icon="apps" onClick={() => setFilter('all')}>הכל</Chip>
+          {presentCats.map((c) => (
+            <Chip key={c} selected={effectiveFilter === c} icon={CATEGORIES[c].icon} onClick={() => setFilter(c)}>
+              {CATEGORIES[c].label}
+            </Chip>
+          ))}
+        </div>
+      )}
 
       {/* Grouped list */}
       {groups.map((g) => (
