@@ -52,16 +52,20 @@ interface ProfileScreenProps {
   onOpenColor: () => void;
   seed: string;
   user: { displayName: string | null; email: string | null; photoURL: string | null } | null;
-  completedCount: number;
   reminders: Reminder[];
   onImport: (items: unknown[]) => void;
 }
 
-export function ProfileScreen({ mode, setMode, onOpenColor, seed, user, completedCount, reminders, onImport }: ProfileScreenProps) {
-  const [geo, setGeo] = useState(true);
-  const [analytics, setAnalytics] = useState(false);
+function initialRadius(): number {
+  const saved = parseFloat(localStorage.getItem('ultra-rs') || '');
+  if (Number.isFinite(saved) && saved > 0) return saved;
+  const css = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--rs'));
+  return Number.isFinite(css) && css > 0 ? css : 1;
+}
+
+export function ProfileScreen({ mode, setMode, onOpenColor, seed, user, reminders, onImport }: ProfileScreenProps) {
   const [sound, setSound] = useState(true);
-  const [radius, setRadius] = useState(1);
+  const [radius, setRadius] = useState(initialRadius);
   const seedName = (SEED_COLORS.find((c) => c.hex.toLowerCase() === seed.toLowerCase()) || {}).name || 'מותאם אישית';
 
   const exportData = () => {
@@ -92,6 +96,7 @@ export function ProfileScreen({ mode, setMode, onOpenColor, seed, user, complete
   const handleRadiusChange = (val: number) => {
     setRadius(val);
     document.documentElement.style.setProperty('--rs', String(val));
+    localStorage.setItem('ultra-rs', String(val));
   };
 
   return (
@@ -130,10 +135,6 @@ export function ProfileScreen({ mode, setMode, onOpenColor, seed, user, complete
             {user?.email || 'כניסה אנונימית'}
           </div>
         </div>
-        <div style={{ textAlign: 'center', flexShrink: 0 }}>
-          <div style={{ font: '800 22px var(--font-display)', color: 'var(--md-primary)' }}>{completedCount}</div>
-          <div style={{ font: '600 11px var(--font-body)', color: 'var(--md-on-surface-variant)' }}>הושלמו</div>
-        </div>
       </Card>
 
       {/* Appearance */}
@@ -169,28 +170,6 @@ export function ProfileScreen({ mode, setMode, onOpenColor, seed, user, complete
             className="ultra-range"
           />
         </div>
-      </Card>
-
-      {/* Privacy */}
-      <SectionTitle>פרטיות ונתונים</SectionTitle>
-      <Card tone="lowest" style={{ marginBottom: 22, overflow: 'hidden' }}>
-        <SettingRow
-          icon="navigation" tone="tertiary" title="תזכורות מבוססות מיקום"
-          sub="Geofence — הכל מעובד במכשיר"
-          trailing={<Switch checked={geo} onChange={setGeo} />}
-        />
-        <div style={{ height: 1, background: 'var(--md-outline-variant)', marginInline: 16 }} />
-        <SettingRow
-          icon="lock" tone="primary" title="סנכרון מאובטח בענן"
-          sub="התזכורות נשמרות ב-Firebase ומסונכרנות בין המכשירים שלך, מוצפנות בתעבורה"
-          trailing={<Icon name="shield-check" size={22} color="var(--md-primary)" />}
-        />
-        <div style={{ height: 1, background: 'var(--md-outline-variant)', marginInline: 16 }} />
-        <SettingRow
-          icon="trending-up" tone="secondary" title="שיתוף אנליטיקה אנונימית"
-          sub={analytics ? 'פעיל' : 'כבוי'}
-          trailing={<Switch checked={analytics} onChange={setAnalytics} />}
-        />
       </Card>
 
       {/* Backup */}

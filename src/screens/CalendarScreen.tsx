@@ -3,6 +3,7 @@ import type { Reminder } from '../types';
 import { HEB_MONTHS, HEB_DAYS_SHORT } from '../data/sampleData';
 import { CATEGORIES } from '../data/sampleData';
 import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
 import { TopBar } from '../components/ui/TopBar';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { IconButton } from '../components/ui/IconButton';
@@ -73,6 +74,8 @@ export function CalendarScreen({ reminders, onOpen, onToggle, onAdd }: CalendarS
           <IconButton icon="chevron-left" size={38} fontSize={22} tone="container" onClick={nextMonth} />
         </div>
 
+        {/* Headers + grid, nudged a few px to optically centre within the card */}
+        <div style={{ transform: 'translateX(4px)' }}>
         {/* Day-of-week headers */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4, marginBottom: 10 }}>
           {HEB_DAYS_SHORT.map((d) => (
@@ -127,19 +130,14 @@ export function CalendarScreen({ reminders, onOpen, onToggle, onAdd }: CalendarS
             );
           })}
         </div>
+        </div>
       </Card>
 
       <SectionTitle
         action={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ font: '600 13px var(--font-body)', color: 'var(--md-on-surface-variant)' }}>
-              {isCurrentMonth && sel === today.getDate() ? 'היום' : `${sel} ב${HEB_MONTHS[viewMonth]}`}
-            </span>
-            {onAdd && (
-              <IconButton icon="plus" size={32} fontSize={18} tone="container"
-                onClick={() => onAdd(selDateStr)} label="הוסף תזכורת" />
-            )}
-          </div>
+          <span style={{ font: '600 13px var(--font-body)', color: 'var(--md-on-surface-variant)' }}>
+            {isCurrentMonth && sel === today.getDate() ? 'היום' : `${sel} ב${HEB_MONTHS[viewMonth]}`}
+          </span>
         }
       >
         לוח הזמנים
@@ -196,26 +194,19 @@ export function CalendarScreen({ reminders, onOpen, onToggle, onAdd }: CalendarS
         })}
 
         {selReminders.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '30px 20px', color: 'var(--md-on-surface-variant)' }}>
+          <div style={{ textAlign: 'center', padding: '24px 20px 6px', color: 'var(--md-on-surface-variant)' }}>
             <Icon name="calendar-check" size={42} color="var(--md-on-surface-variant)" />
             <div style={{ font: '600 15px var(--font-body)', marginTop: 10 }}>אין תזכורות ביום זה</div>
-            {onAdd && (
-              <button
-                onClick={() => onAdd(selDateStr)}
-                style={{
-                  marginTop: 14, padding: '10px 20px', borderRadius: 'var(--r-pill)',
-                  background: 'var(--md-primary-container)', color: 'var(--md-on-primary-container)',
-                  border: 'none', cursor: 'pointer', font: '600 14px var(--font-body)',
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                }}
-              >
-                <Icon name="plus" size={16} color="var(--md-on-primary-container)" />
-                הוסף תזכורת ליום זה
-              </button>
-            )}
           </div>
         )}
       </div>
+
+      {/* Single add button — always available for the selected day */}
+      {onAdd && (
+        <Button variant="tonal" full icon="plus" style={{ marginTop: 16 }} onClick={() => onAdd(selDateStr)}>
+          הוסף תזכורת ליום זה
+        </Button>
+      )}
     </div>
   );
 }

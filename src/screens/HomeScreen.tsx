@@ -52,8 +52,9 @@ function PriorityDot({ priority }: { priority: 'urgent' | 'normal' }) {
   );
 }
 
-function ReminderRow({ r, onToggle, onOpen, index }: {
+function ReminderRow({ r, onToggle, onOpen, index, countdown }: {
   r: Reminder; onToggle: (id: string) => void; onOpen: (r: Reminder) => void; index: number;
+  countdown?: number | null;
 }) {
   const cat = CATEGORIES[r.cat];
   const tone = cat?.tone ?? (r.priority === 'urgent' ? 'error' : 'primary');
@@ -83,7 +84,16 @@ function ReminderRow({ r, onToggle, onOpen, index }: {
           </span>
           <PriorityDot priority={r.priority} />
         </div>
-        {r.done && r.doneAt && (
+        {countdown != null ? (
+          <div style={{
+            marginTop: 8, padding: '6px 10px', borderRadius: 'var(--r-xs)',
+            background: 'var(--md-surface-container-highest)', color: 'var(--md-on-surface-variant)',
+            font: '600 12px var(--font-body)', display: 'inline-flex', alignItems: 'center', gap: 5,
+          }}>
+            <Icon name="clock" size={14} color="var(--md-on-surface-variant)" />
+            {`נמחק בעוד ${countdown}ש׳`}
+          </div>
+        ) : r.done && r.doneAt && (
           <div style={{
             marginTop: 8, padding: '6px 10px', borderRadius: 'var(--r-xs)',
             background: 'var(--md-primary-container)', color: 'var(--md-on-primary-container)',
@@ -134,6 +144,20 @@ function CatHeader({ cat, count }: { cat: CategoryKey; count: number }) {
   );
 }
 
+function GroupHeader({ icon, label, count, bg, fg }: {
+  icon: string; label: string; count: number; bg: string; fg: string;
+}) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 9, margin: '22px 2px 12px' }}>
+      <span style={{ width: 28, height: 28, borderRadius: 'var(--r-xs)', background: bg, display: 'grid', placeItems: 'center' }}>
+        <Icon name={icon} size={16} color={fg} />
+      </span>
+      <span style={{ font: '700 16px var(--font-display)', color: 'var(--md-on-surface)' }}>{label}</span>
+      <span style={{ font: '600 13px var(--font-body)', color: 'var(--md-on-surface-variant)' }}>{count}</span>
+    </div>
+  );
+}
+
 interface HomeScreenProps {
   reminders: Reminder[];
   onToggle: (id: string) => void;
@@ -161,21 +185,47 @@ export function HomeScreen({
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'בוקר טוב' : hour < 18 ? 'צהריים טובים' : 'ערב טוב';
 
-  // Filters are derived from what's actually in the current list — not a fixed
-  // set. Only categories that have reminders here are offered, and the row is
-  // hidden when there's nothing meaningful to filter (0–1 categories).
-  const presentCats = CATEGORY_ORDER.filter((c) => reminders.some((r) => r.cat === c));
+  // A one-time time-reminder whose moment has passed is "overdue"
+  const isOverdue = (r: Reminder) => {
+    if (r.done || r.kind !== 'time' || !r.time) return false;
+    if (r.repeat && r.repeat !== 'חד פעמי') return false;
+    const [hh, mm] = r.time.split(':').map(Number);
+    if (Number.isNaN(hh) || Number.isNaN(mm)) return false;
+    const dt = new Date();
+    if (r.dueDate) { const [y, mo, d] = r.dueDate.split('-').map(Number); dt.setFullYear(y, mo - 1, d); }
+    dt.setHours(hh, mm, 0, 0);
+    return dt.getTime() < Date.now();
+  };
+
+  const doneItems = reminders.filter((r) => r.done);
+  const overdueItems = reminders.filter((r) => !r.done && isOverdue(r));
+  const activeItems = reminders.filter((r) => !r.done && !isOverdue(r));
+
+  // Tick once a second to drive the auto-delete countdown on completed items
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (doneItems.length === 0) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [doneItems.length]);
+  const AUTO_DELETE_MS = 60_000;
+  const countdownFor = (r: Reminder) =>
+    r.doneAtMs ? Math.max(0, Math.ceil((AUTO_DELETE_MS - (now - r.doneAtMs)) / 1000)) : null;
+
+  // Filters are derived from the active reminders in the current list — not a
+  // fixed set. Only categories present are offered; the row hides when there's
+  // nothing meaningful to filter (0–1 categories).
+  const presentCats = CATEGORY_ORDER.filter((c) => activeItems.some((r) => r.cat === c));
   const showFilters = presentCats.length >= 2;
 
-  // Reset the filter when it no longer applies (e.g. switched to another list)
   useEffect(() => {
     if (filter !== 'all' && !presentCats.includes(filter)) setFilter('all');
   }, [filter, presentCats.join(',')]);
 
   const effectiveFilter = filter !== 'all' && presentCats.includes(filter) ? filter : 'all';
-  const shown = effectiveFilter === 'all' ? reminders : reminders.filter((r) => r.cat === effectiveFilter);
+  const shownActive = effectiveFilter === 'all' ? activeItems : activeItems.filter((r) => r.cat === effectiveFilter);
   const groups = CATEGORY_ORDER
-    .map((c) => ({ cat: c, items: shown.filter((r) => r.cat === c) }))
+    .map((c) => ({ cat: c, items: shownActive.filter((r) => r.cat === c) }))
     .filter((g) => g.items.length > 0);
 
   return (
@@ -276,7 +326,7 @@ export function HomeScreen({
         </div>
       )}
 
-      {/* Grouped list */}
+      {/* Active reminders, grouped by category */}
       {groups.map((g) => (
         <div key={g.cat}>
           <CatHeader cat={g.cat} count={g.items.length} />
@@ -288,10 +338,36 @@ export function HomeScreen({
         </div>
       ))}
 
-      {groups.length === 0 && (
+      {/* Overdue — moved down, kept until marked done */}
+      {effectiveFilter === 'all' && overdueItems.length > 0 && (
+        <div>
+          <GroupHeader icon="alert" label="עבר זמנן" count={overdueItems.length}
+            bg="var(--md-error-container)" fg="var(--md-on-error-container)" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {overdueItems.map((r, i) => (
+              <ReminderRow key={r.id} r={r} index={i} onToggle={onToggle} onOpen={onOpen} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Completed — auto-removed after a minute, with a countdown */}
+      {effectiveFilter === 'all' && doneItems.length > 0 && (
+        <div>
+          <GroupHeader icon="check-circle" label="בוצעו" count={doneItems.length}
+            bg="var(--md-primary-container)" fg="var(--md-on-primary-container)" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {doneItems.map((r, i) => (
+              <ReminderRow key={r.id} r={r} index={i} onToggle={onToggle} onOpen={onOpen} countdown={countdownFor(r)} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {groups.length === 0 && overdueItems.length === 0 && doneItems.length === 0 && (
         <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--md-on-surface-variant)' }}>
           <Icon name="check-circle" size={48} color="var(--md-on-surface-variant)" />
-          <div style={{ font: '600 16px var(--font-body)', marginTop: 12 }}>אין תזכורות בקטגוריה זו</div>
+          <div style={{ font: '600 16px var(--font-body)', marginTop: 12 }}>אין תזכורות עדיין</div>
         </div>
       )}
     </div>

@@ -3,7 +3,7 @@ export type ReminderPriority = 'urgent' | 'normal';
 export type ReminderTrigger = 'arrive' | 'leave';
 export type CategoryKey = 'health' | 'work' | 'personal' | 'shopping';
 export type ThemeMode = 'light' | 'dark';
-export type NavTab = 'home' | 'calendar' | 'stats' | 'profile';
+export type NavTab = 'home' | 'calendar' | 'profile';
 export type ToneName = 'primary' | 'secondary' | 'tertiary' | 'error';
 export type FontPair = 'rubik' | 'assistant' | 'heebo' | 'rubikAll';
 

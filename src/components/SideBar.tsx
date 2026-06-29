@@ -5,7 +5,6 @@ import { Icon } from './ui/Icon';
 const NAV = [
   { id: 'home'     as NavTab, icon: 'home',     label: 'בית' },
   { id: 'calendar' as NavTab, icon: 'calendar', label: 'לוח שנה' },
-  { id: 'stats'    as NavTab, icon: 'stats',    label: 'סטטיסטיקה' },
   { id: 'profile'  as NavTab, icon: 'user',     label: 'פרופיל' },
 ];
 

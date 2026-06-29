@@ -17,7 +17,7 @@ import { useWidgetSync } from './hooks/useWidgetSync';
 import { checkForUpdate } from './services/appUpdate';
 import type { UpdateInfo } from './services/appUpdate';
 import { UpdateBanner } from './components/UpdateBanner';
-import { initNotifications, scheduleReminder, cancelReminder, snoozeReminder, ensurePermission } from './services/notifications';
+import { initNotifications, scheduleReminder, cancelReminder, ensurePermission } from './services/notifications';
 import { registerGeofence, removeGeofence } from './services/geofence';
 import { ListsSheet } from './components/ListsSheet';
 import { Icon } from './components/ui/Icon';
@@ -30,7 +30,6 @@ import { OnboardingScreen } from './screens/OnboardingScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { AddScreen } from './screens/AddScreen';
 import { CalendarScreen } from './screens/CalendarScreen';
-import { StatsScreen } from './screens/StatsScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
 
 export function App() {
@@ -60,6 +59,12 @@ export function App() {
   useEffect(() => { setNavKey((k) => k + 1); }, [tab]);
 
   useEffect(() => { initNotifications(); }, []);
+
+  // Restore saved corner-radius scale across reloads
+  useEffect(() => {
+    const rs = parseFloat(localStorage.getItem('ultra-rs') || '');
+    if (Number.isFinite(rs) && rs > 0) document.documentElement.style.setProperty('--rs', String(rs));
+  }, []);
 
   // Check for a newer side-loaded APK (native Android only; no-op elsewhere)
   useEffect(() => { checkForUpdate().then(setUpdate); }, []);
@@ -154,9 +159,16 @@ export function App() {
     }
   };
 
-  const snooze = (r: Reminder) => {
-    snoozeReminder(r, 10);
-    showToast('נדחה ב-10 דקות ⏰');
+  const updateField = async (id: string, fields: Partial<Reminder>) => {
+    if (!user) return;
+    await fbUpdate(scope, id, fields);
+    const base = reminders.find((r) => r.id === id);
+    const updated = base ? { ...base, ...fields } : null;
+    setDetail((d) => (d && d.id === id ? { ...d, ...fields } as Reminder : d));
+    if (updated && updated.kind === 'time' && !updated.done) {
+      await cancelReminder(id);
+      scheduleReminder(updated);
+    }
   };
 
   // Repeating reminders completed on a previous day come back automatically
@@ -172,6 +184,22 @@ export function App() {
       fbToggle(activeListId ? { kind: 'list', listId: activeListId } : { kind: 'user', uid: user.uid }, r.id, false);
       scheduleReminder({ ...r, done: false });
     });
+  }, [reminders, user?.uid, activeListId]);
+
+  // Completed one-time reminders are auto-removed a minute after being checked off
+  useEffect(() => {
+    if (!user) return;
+    const AUTO_MS = 60_000;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    reminders.forEach((r) => {
+      if (!r.done || !r.doneAtMs) return;
+      if (r.repeat && r.repeat !== 'חד פעמי') return; // repeating ones reset instead
+      const fire = () => { fbDelete(scope, r.id); cancelReminder(r.id); removeGeofence(r.id); };
+      const remain = AUTO_MS - (Date.now() - r.doneAtMs);
+      if (remain <= 0) fire();
+      else timers.push(setTimeout(fire, remain));
+    });
+    return () => timers.forEach(clearTimeout);
   }, [reminders, user?.uid, activeListId]);
 
   const importReminders = async (items: unknown[]) => {
@@ -284,7 +312,6 @@ export function App() {
                 onAdd={(date) => { setAddDate(date); setAdding(true); }}
               />
             )}
-            {tab === 'stats' && <StatsScreen reminders={reminders} />}
             {tab === 'profile' && (
               <ProfileScreen
                 mode={mode}
@@ -292,7 +319,6 @@ export function App() {
                 onOpenColor={() => setColorOpen(true)}
                 seed={seed}
                 user={user}
-                completedCount={reminders.filter((r) => r.done).length}
                 reminders={reminders}
                 onImport={importReminders}
               />
@@ -332,7 +358,7 @@ export function App() {
           onToggle={toggle}
           onDelete={del}
           onEdit={(r) => { setEditing(r); setAdding(true); }}
-          onSnooze={snooze}
+          onUpdate={updateField}
         />
         <ColorSheet open={colorOpen} onClose={() => setColorOpen(false)} seed={seed} setSeed={setSeed} />
         {user && (

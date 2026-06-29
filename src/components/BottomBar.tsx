@@ -11,7 +11,6 @@ interface NavItem {
 const NAV: NavItem[] = [
   { id: 'home',     icon: 'home',     label: 'בית' },
   { id: 'calendar', icon: 'calendar', label: 'לוח' },
-  { id: 'stats',    icon: 'stats',    label: 'סטטיסטיקה' },
   { id: 'profile',  icon: 'user',     label: 'פרופיל' },
 ];
 

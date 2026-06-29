@@ -50,10 +50,18 @@ public class ReminderWidgetService extends RemoteViewsService {
             boolean done = r.optBoolean("done");
             String title = r.optString("title", "תזכורת");
             String kind = r.optString("kind", "time");
-            String sub = r.optString("sub", "");
-            if (sub.isEmpty()) {
-                if ("place".equals(kind)) sub = "לפי מיקום";
-                else sub = r.optString("time", "");
+            String sub;
+            if ("place".equals(kind)) {
+                sub = r.optString("sub", "");
+                if (sub.isEmpty()) sub = "לפי מיקום";
+            } else {
+                // time + optional date, e.g. "9:00  ·  28/06"
+                StringBuilder b = new StringBuilder();
+                String time = r.optString("time", "");
+                if (!time.isEmpty()) b.append(time);
+                String due = formatDue(r.optString("dueDate", ""));
+                if (!due.isEmpty()) { if (b.length() > 0) b.append("  ·  "); b.append(due); }
+                sub = b.length() > 0 ? b.toString() : r.optString("sub", "");
             }
             boolean urgent = "urgent".equals(r.optString("priority"));
 
@@ -99,6 +107,14 @@ public class ReminderWidgetService extends RemoteViewsService {
             row.setOnClickFillInIntent(R.id.item_body, open);
 
             return row;
+        }
+
+        private static String formatDue(String due) {
+            // "YYYY-MM-DD" → "DD/MM"; empty/invalid → ""
+            if (due == null || due.length() < 10) return "";
+            String[] p = due.split("-");
+            if (p.length != 3) return "";
+            return p[2] + "/" + p[1];
         }
 
         @Override public RemoteViews getLoadingView() { return null; }
