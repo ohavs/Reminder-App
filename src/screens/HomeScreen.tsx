@@ -25,8 +25,8 @@ function ProgressRing({ value, size = 88, stroke = 10 }: { value: number; size?:
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
         <div style={{ textAlign: 'center', lineHeight: 1 }}>
-          <div style={{ font: '800 22px var(--font-display)', color: 'var(--md-on-surface)' }}>
-            {Math.round(value * 100)}<span style={{ fontSize: 12 }}>%</span>
+          <div style={{ font: `800 ${Math.round(size * 0.27)}px var(--font-display)`, color: 'var(--md-on-surface)' }}>
+            {Math.round(value * 100)}<span style={{ fontSize: Math.round(size * 0.15) }}>%</span>
           </div>
         </div>
       </div>
@@ -178,13 +178,6 @@ export function HomeScreen({
     .map((c) => ({ cat: c, items: shown.filter((r) => r.cat === c) }))
     .filter((g) => g.items.length > 0);
 
-  const divider = (
-    <div style={{
-      height: 1, background: 'color-mix(in oklab, var(--md-outline-variant) 45%, transparent)',
-      margin: '12px 0',
-    }} />
-  );
-
   return (
     <div className="screen-pad">
       <TopBar
@@ -206,67 +199,54 @@ export function HomeScreen({
         ]}
       />
 
-      {/* Combined hero + progress card */}
+      {/* Compact hero: next reminder + progress, with a slim stats line */}
       <Card tone="base" className="reveal" style={{
-        padding: 18, marginBottom: 20, position: 'relative', overflow: 'hidden',
+        padding: 14, marginBottom: 16, position: 'relative', overflow: 'hidden',
         background: 'radial-gradient(150% 130% at 90% -10%, var(--md-primary-container), var(--md-surface-container) 75%)',
         boxShadow: 'var(--sh-2)',
       }}>
-        <div style={{ position: 'absolute', insetInlineStart: -30, bottom: -40, width: 120, height: 120, borderRadius: '50%', background: 'color-mix(in oklab, var(--md-tertiary) 22%, transparent)', filter: 'blur(4px)' }} />
-
         {/* Next reminder row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative' }}>
           <ClayTile
             icon={next ? next.icon : 'check-circle'}
             tone={next ? (CATEGORIES[next.cat]?.tone ?? 'primary') : 'primary'}
-            size={60}
+            size={46}
           />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ font: '600 12px var(--font-body)', color: 'var(--md-on-primary-container)', opacity: 0.85, marginBottom: 3 }}>
+            <div style={{ font: '600 11px var(--font-body)', color: 'var(--md-on-primary-container)', opacity: 0.85, marginBottom: 2 }}>
               {next ? 'התזכורת הבאה' : 'סיימת הכל להיום!'}
             </div>
             <div style={{
-              font: '800 19px var(--font-display)', color: 'var(--md-on-surface)',
+              font: '800 17px var(--font-display)', color: 'var(--md-on-surface)',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
               {next ? next.title : 'כל הכבוד 🎉'}
             </div>
             {next && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, font: '500 13px var(--font-body)', color: 'var(--md-on-surface-variant)' }}>
-                <Icon name={next.kind === 'place' ? 'location' : 'clock'} size={14} color="var(--md-on-surface-variant)" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2, font: '500 12px var(--font-body)', color: 'var(--md-on-surface-variant)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <Icon name={next.kind === 'place' ? 'location' : 'clock'} size={13} color="var(--md-on-surface-variant)" />
                 {next.kind === 'place' ? next.place : `בשעה ${next.time}`}
               </div>
             )}
           </div>
-          <ProgressRing value={progress} size={82} stroke={9} />
+          <ProgressRing value={progress} size={54} stroke={6} />
         </div>
 
-        {divider}
-
-        {/* Stats strip */}
-        <div style={{ display: 'flex', position: 'relative' }}>
-          {[
-            { value: `${doneCount}/${reminders.length}`, label: 'בוצעו' },
-            { value: pending.length, label: 'ממתינות' },
-            { value: urgentCount, label: 'דחופות', urgent: urgentCount > 0 },
-          ].map((s, i, arr) => (
-            <div key={i} style={{ flex: 1, textAlign: 'center', position: 'relative' }}>
-              <div style={{
-                font: '800 17px var(--font-display)',
-                color: (s as { urgent?: boolean }).urgent ? 'var(--md-error)' : 'var(--md-on-surface)',
-                lineHeight: 1, marginBottom: 3,
-              }}>
-                {s.value}
-              </div>
-              <div style={{ font: '500 11px var(--font-body)', color: 'var(--md-on-surface-variant)' }}>{s.label}</div>
-              {i < arr.length - 1 && (
-                <div style={{
-                  position: 'absolute', insetInlineEnd: 0, top: 0, bottom: 0,
-                  width: 1, background: 'color-mix(in oklab, var(--md-outline-variant) 45%, transparent)',
-                }} />
-              )}
-            </div>
-          ))}
+        {/* Slim stats line */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          marginTop: 12, paddingTop: 10,
+          borderTop: '1px solid color-mix(in oklab, var(--md-outline-variant) 45%, transparent)',
+          font: '600 12px var(--font-body)', color: 'var(--md-on-surface-variant)',
+          flexWrap: 'wrap',
+        }}>
+          <span><b style={{ color: 'var(--md-on-surface)', fontWeight: 800 }}>{doneCount}/{reminders.length}</b> בוצעו</span>
+          <span style={{ opacity: 0.5 }}>·</span>
+          <span><b style={{ color: 'var(--md-on-surface)', fontWeight: 800 }}>{pending.length}</b> ממתינות</span>
+          <span style={{ opacity: 0.5 }}>·</span>
+          <span style={{ color: urgentCount > 0 ? 'var(--md-error)' : undefined }}>
+            <b style={{ fontWeight: 800, color: urgentCount > 0 ? 'var(--md-error)' : 'var(--md-on-surface)' }}>{urgentCount}</b> דחופות
+          </span>
         </div>
       </Card>
 
