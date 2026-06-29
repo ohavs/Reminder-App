@@ -47,6 +47,18 @@ export interface SharedList {
   inviteCode: string;
 }
 
+export type InviteStatus = 'pending' | 'accepted' | 'declined';
+
+export interface Invite {
+  id: string;
+  listId: string;
+  listName: string;
+  email: string;     // invited person's email (lowercased)
+  fromName: string;
+  fromUid: string;
+  status: InviteStatus;
+}
+
 export interface AppearanceSettings {
   fontPair: FontPair;
   radius: number;

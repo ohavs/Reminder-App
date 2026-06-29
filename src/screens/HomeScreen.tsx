@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import type { Reminder, CategoryKey, ThemeMode, SharedList } from '../types';
+import { useEffect, useRef, useState } from 'react';
+import type { Reminder, CategoryKey, ThemeMode, SharedList, Invite } from '../types';
 import { CATEGORIES, CATEGORY_ORDER } from '../data/sampleData';
 import { Card } from '../components/ui/Card';
 import { Chip } from '../components/ui/Chip';
@@ -158,6 +158,33 @@ function GroupHeader({ icon, label, count, bg, fg }: {
   );
 }
 
+function ListPill({ list, active, onSelect, onLongPress }: {
+  list: SharedList; active: boolean; onSelect: () => void; onLongPress: () => void;
+}) {
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const fired = useRef(false);
+  const start = () => { fired.current = false; timer.current = setTimeout(() => { fired.current = true; onLongPress(); }, 500); };
+  const stop = () => { if (timer.current) clearTimeout(timer.current); };
+  return (
+    <button
+      onPointerDown={start} onPointerUp={stop} onPointerLeave={stop} onPointerCancel={stop}
+      onClick={() => { if (fired.current) { fired.current = false; return; } onSelect(); }}
+      onContextMenu={(e) => { e.preventDefault(); onLongPress(); }}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 7, height: 40, padding: '0 16px',
+        borderRadius: 'var(--r-pill)', flexShrink: 0, whiteSpace: 'nowrap', cursor: 'pointer',
+        border: active ? 'none' : '1.5px solid var(--md-outline-variant)',
+        background: active ? 'var(--md-secondary-container)' : 'transparent',
+        color: active ? 'var(--md-on-secondary-container)' : 'var(--md-on-surface-variant)',
+        font: '600 14px/1 var(--font-body)', WebkitTapHighlightColor: 'transparent',
+      }}
+    >
+      <Icon name="users" size={16} style={{ marginInlineStart: -2 }} />
+      {list.name}
+    </button>
+  );
+}
+
 interface HomeScreenProps {
   reminders: Reminder[];
   onToggle: (id: string) => void;
@@ -170,11 +197,16 @@ interface HomeScreenProps {
   activeListId: string | null;
   onSelectList: (id: string | null) => void;
   onManageLists: () => void;
+  onListLongPress: (list: SharedList) => void;
+  invites: Invite[];
+  onAcceptInvite: (inv: Invite) => void;
+  onDeclineInvite: (inv: Invite) => void;
 }
 
 export function HomeScreen({
   reminders, onToggle, onOpen, name, onOpenColor, mode, setMode,
   lists, activeListId, onSelectList, onManageLists,
+  onListLongPress, invites, onAcceptInvite, onDeclineInvite,
 }: HomeScreenProps) {
   const [filter, setFilter] = useState<'all' | CategoryKey>('all');
   const pending = reminders.filter((r) => !r.done);
@@ -300,15 +332,45 @@ export function HomeScreen({
         </div>
       </Card>
 
-      {/* Space switcher: personal / shared lists */}
+      {/* Incoming list invitations */}
+      {invites.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+          {invites.map((inv) => (
+            <Card key={inv.id} tone="base" className="reveal" style={{
+              padding: 14, display: 'flex', alignItems: 'center', gap: 12,
+              background: 'radial-gradient(140% 130% at 90% -10%, var(--md-tertiary-container), var(--md-surface-container) 80%)',
+            }}>
+              <ClayTile icon="users" tone="tertiary" size={44} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ font: '700 14px var(--font-body)', color: 'var(--md-on-surface)' }}>הזמנה לרשימה משותפת</div>
+                <div style={{ font: '500 12px var(--font-body)', color: 'var(--md-on-surface-variant)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {inv.fromName ? `${inv.fromName} הזמין אותך ל"${inv.listName}"` : `הוזמנת ל"${inv.listName}"`}
+                </div>
+              </div>
+              <button onClick={() => onAcceptInvite(inv)} aria-label="קבל"
+                style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                  background: 'var(--md-primary)', color: 'var(--md-on-primary)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                <Icon name="check" size={20} color="var(--md-on-primary)" />
+              </button>
+              <button onClick={() => onDeclineInvite(inv)} aria-label="דחה"
+                style={{ width: 38, height: 38, borderRadius: '50%', cursor: 'pointer',
+                  border: '1.5px solid var(--md-outline-variant)', background: 'transparent',
+                  color: 'var(--md-on-surface-variant)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                <Icon name="x" size={18} />
+              </button>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Space switcher: personal / shared lists (long-press a list to manage) */}
       <div className="hide-scroll" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, marginBottom: 14 }}>
         <Chip selected={!activeListId} icon="user" onClick={() => onSelectList(null)}>אישי</Chip>
         {lists.map((l) => (
-          <Chip key={l.id} selected={activeListId === l.id} icon="users" onClick={() => onSelectList(l.id)}>
-            {l.name}
-          </Chip>
+          <ListPill key={l.id} list={l} active={activeListId === l.id}
+            onSelect={() => onSelectList(l.id)} onLongPress={() => onListLongPress(l)} />
         ))}
-        <Chip icon="plus" onClick={onManageLists}>רשימות</Chip>
+        <Chip icon="plus" onClick={onManageLists}>{' '}</Chip>
       </div>
 
       {/* Category filter */}

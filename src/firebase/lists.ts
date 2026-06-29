@@ -70,6 +70,11 @@ export async function joinListByCode(uid: string, code: string): Promise<string>
   return listId;
 }
 
+// Rename a list (owner/member)
+export async function renameList(listId: string, name: string): Promise<void> {
+  await updateDoc(doc(db, paths.list(listId)), { name: name.trim() || 'רשימה משותפת' });
+}
+
 // Leave a list (owner leaving deletes it for everyone)
 export async function leaveList(uid: string, list: SharedList): Promise<void> {
   if (list.ownerId === uid) {

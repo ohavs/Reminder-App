@@ -32,6 +32,22 @@ service cloud.firestore {
       }
     }
 
+    // Email invites — readable by the sender and by the invited email
+    match /mailInvites/{inviteId} {
+      allow create: if request.auth != null
+        && request.resource.data.fromUid == request.auth.uid;
+      allow read: if request.auth != null && (
+        resource.data.fromUid == request.auth.uid
+        || resource.data.email == request.auth.token.email
+      );
+      // The invited user may only flip the status (accept / decline)
+      allow update: if request.auth != null
+        && resource.data.email == request.auth.token.email
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      allow delete: if request.auth != null
+        && resource.data.fromUid == request.auth.uid;
+    }
+
     // Invite codes — doc id is the unguessable code; holding it grants lookup
     match /invites/{code} {
       allow get: if request.auth != null;

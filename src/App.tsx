@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import type { Reminder, NavTab, ThemeMode, SharedList, SavedPlace } from './types';
+import { useState, useEffect, useRef } from 'react';
+import type { Reminder, NavTab, ThemeMode, SharedList, SavedPlace, Invite } from './types';
 import { useDynamicColor } from './hooks/useDynamicColor';
 import { useAuth } from './hooks/useAuth';
 import { LoginScreen } from './screens/LoginScreen';
@@ -11,7 +11,11 @@ import {
   updateReminder as fbUpdate,
 } from './firebase/reminders';
 import type { Scope } from './firebase/reminders';
-import { subscribeToMyLists } from './firebase/lists';
+import { subscribeToMyLists, renameList, leaveList } from './firebase/lists';
+import {
+  shareListByEmail, subscribeIncomingInvites, subscribeSentInvites,
+  acceptInvite, declineInvite,
+} from './firebase/invites';
 import { subscribeToPlaces, addPlace, deletePlace } from './firebase/places';
 import { useWidgetSync } from './hooks/useWidgetSync';
 import { checkForUpdate } from './services/appUpdate';
@@ -20,6 +24,7 @@ import { UpdateBanner } from './components/UpdateBanner';
 import { initNotifications, scheduleReminder, cancelReminder, ensurePermission } from './services/notifications';
 import { registerGeofence, removeGeofence } from './services/geofence';
 import { ListsSheet } from './components/ListsSheet';
+import { ListActionsSheet } from './components/ListActionsSheet';
 import { Icon } from './components/ui/Icon';
 import { BottomBar } from './components/BottomBar';
 import { SideBar } from './components/SideBar';
@@ -48,6 +53,10 @@ export function App() {
   const [lists, setLists] = useState<SharedList[]>([]);
   const [activeListId, setActiveListId] = useState<string | null>(null);
   const [listsOpen, setListsOpen] = useState(false);
+  const [actionsList, setActionsList] = useState<SharedList | null>(null);
+  const [incomingInvites, setIncomingInvites] = useState<Invite[]>([]);
+  const [sentInvites, setSentInvites] = useState<Invite[]>([]);
+  const prevInviteCount = useRef(0);
   const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>([]);
   const [update, setUpdate] = useState<UpdateInfo | null>(null);
   const [updateDismissed, setUpdateDismissed] = useState(false);
@@ -86,6 +95,62 @@ export function App() {
     if (!user) return;
     return subscribeToPlaces(user.uid, setSavedPlaces);
   }, [user?.uid]);
+
+  // Shared-list invitations addressed to me / sent by me
+  useEffect(() => {
+    if (!user?.email) return;
+    return subscribeIncomingInvites(user.email, setIncomingInvites);
+  }, [user?.email]);
+
+  useEffect(() => {
+    if (!user) return;
+    return subscribeSentInvites(user.uid, setSentInvites);
+  }, [user?.uid]);
+
+  // Notify when a new invitation arrives
+  useEffect(() => {
+    if (incomingInvites.length > prevInviteCount.current) {
+      showToast('קיבלת הזמנה לרשימה משותפת 📩');
+    }
+    prevInviteCount.current = incomingInvites.length;
+  }, [incomingInvites.length]);
+
+  const handleAcceptInvite = async (inv: Invite) => {
+    if (!user) return;
+    try {
+      await acceptInvite(inv, user.uid);
+      setActiveListId(inv.listId);
+      showToast('הצטרפת לרשימה 🎉');
+    } catch { showToast('ההצטרפות נכשלה'); }
+  };
+
+  const handleDeclineInvite = async (inv: Invite) => {
+    try { await declineInvite(inv); } catch { /* ignore */ }
+  };
+
+  const handleShareList = async (list: SharedList, email: string) => {
+    if (!user) return;
+    await shareListByEmail({
+      listId: list.id, listName: list.name, email,
+      fromName: user.displayName || 'משתמש', fromUid: user.uid,
+    });
+  };
+
+  const handleRenameList = async (id: string, name: string) => {
+    try {
+      await renameList(id, name);
+      setActionsList((l) => (l && l.id === id ? { ...l, name } : l));
+    } catch { showToast('עדכון השם נכשל'); }
+  };
+
+  const handleDeleteList = async (list: SharedList) => {
+    if (!user) return;
+    try {
+      if (activeListId === list.id) setActiveListId(null);
+      await leaveList(user.uid, list);
+      showToast(list.ownerId === user.uid ? 'הרשימה נמחקה' : 'עזבת את הרשימה');
+    } catch { showToast('הפעולה נכשלה'); }
+  };
 
   // Keep the Android home-screen widget in sync (no-op on web)
   useWidgetSync(user ? { uid: user.uid } : null, lists);
@@ -302,6 +367,10 @@ export function App() {
                 activeListId={activeListId}
                 onSelectList={setActiveListId}
                 onManageLists={() => setListsOpen(true)}
+                onListLongPress={setActionsList}
+                invites={incomingInvites}
+                onAcceptInvite={handleAcceptInvite}
+                onDeclineInvite={handleDeclineInvite}
               />
             )}
             {tab === 'calendar' && (
@@ -366,9 +435,19 @@ export function App() {
             open={listsOpen}
             onClose={() => setListsOpen(false)}
             uid={user.uid}
-            lists={lists}
-            activeListId={activeListId}
             onSelect={setActiveListId}
+            showToast={showToast}
+          />
+        )}
+        {user && (
+          <ListActionsSheet
+            list={actionsList}
+            uid={user.uid}
+            onClose={() => setActionsList(null)}
+            onRename={handleRenameList}
+            onDelete={handleDeleteList}
+            onShare={handleShareList}
+            sentInvites={sentInvites}
             showToast={showToast}
           />
         )}

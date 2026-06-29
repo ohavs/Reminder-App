@@ -90,6 +90,8 @@ export const paths = {
   listReminders:(lid: string)               => `lists/${lid}/reminders`,
   listReminder: (lid: string, rid: string)  => `lists/${lid}/reminders/${rid}`,
   invite:       (code: string)              => `invites/${code}`,
+  mailInvites:  ()                          => `mailInvites`,
+  mailInvite:   (id: string)                => `mailInvites/${id}`,
 };
 
 // Where a reminder lives: the user's private collection or a shared list
