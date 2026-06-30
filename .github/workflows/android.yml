@@ -71,8 +71,11 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
 
+      # Version-specific filename so a fresh download can't collide with an
+      # older "ultra-reminders.apk" already sitting in the Downloads folder
+      # (which led to installing the stale file).
       - name: Rename APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk ultra-reminders.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk "ultra-reminders-${APP_VERSION_NAME}.apk"
 
       - name: Write update manifest
         run: |
@@ -80,7 +83,7 @@ jobs:
           {
             "versionCode": ${APP_VERSION_CODE},
             "versionName": "${APP_VERSION_NAME}",
-            "url": "https://github.com/ohavs/Reminder-App/releases/download/v${APP_VERSION_NAME}/ultra-reminders.apk",
+            "url": "https://github.com/ohavs/Reminder-App/releases/download/v${APP_VERSION_NAME}/ultra-reminders-${APP_VERSION_NAME}.apk",
             "notes": "גרסה ${APP_VERSION_NAME} זמינה"
           }
           EOF
@@ -93,9 +96,9 @@ jobs:
         with:
           tag_name: v${{ env.APP_VERSION_NAME }}
           name: "ULTRA תזכורות ${{ env.APP_VERSION_NAME }}"
-          body: "APK עדכני שנבנה אוטומטית מה-main. הורד את ultra-reminders.apk והתקן."
+          body: "APK עדכני שנבנה אוטומטית מה-main."
           prerelease: true
-          files: ultra-reminders.apk
+          files: ultra-reminders-${{ env.APP_VERSION_NAME }}.apk
 
       # Keep the rolling "latest" updated too — used by the in-app updater's
       # fixed manifest URL (update.json), which points at the versioned APK.
@@ -108,4 +111,4 @@ jobs:
           prerelease: true
           files: |
             update.json
-            ultra-reminders.apk
+            ultra-reminders-${{ env.APP_VERSION_NAME }}.apk
