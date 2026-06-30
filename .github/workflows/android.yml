@@ -80,19 +80,32 @@ jobs:
           {
             "versionCode": ${APP_VERSION_CODE},
             "versionName": "${APP_VERSION_NAME}",
-            "url": "https://github.com/ohavs/Reminder-App/releases/download/latest/ultra-reminders.apk",
+            "url": "https://github.com/ohavs/Reminder-App/releases/download/v${APP_VERSION_NAME}/ultra-reminders.apk",
             "notes": "גרסה ${APP_VERSION_NAME} זמינה"
           }
           EOF
           cat update.json
 
-      - name: Publish "latest" release with APK
+      # Each build gets its own tag → a unique, uncacheable APK download URL.
+      # (The rolling "latest" tag's fixed URL was served stale by GitHub's CDN.)
+      - name: Publish versioned release with APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.APP_VERSION_NAME }}
+          name: "ULTRA תזכורות ${{ env.APP_VERSION_NAME }}"
+          body: "APK עדכני שנבנה אוטומטית מה-main. הורד את ultra-reminders.apk והתקן."
+          prerelease: true
+          files: ultra-reminders.apk
+
+      # Keep the rolling "latest" updated too — used by the in-app updater's
+      # fixed manifest URL (update.json), which points at the versioned APK.
+      - name: Update "latest" manifest
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
           name: "ULTRA תזכורות — גרסה אחרונה"
-          body: "APK עדכני שנבנה אוטומטית מה-main. הורד את ultra-reminders.apk והתקן."
+          body: "מתעדכן אוטומטית מה-main. הגרסה האחרונה: ${{ env.APP_VERSION_NAME }}"
           prerelease: true
           files: |
-            ultra-reminders.apk
             update.json
+            ultra-reminders.apk
