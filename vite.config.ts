@@ -1,36 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { VitePWA } from 'vite-plugin-pwa';
 
+// No service worker: the app ships bundled inside the APK and loads locally,
+// so a SW added no value — and a self-destroying SW was force-reloading the
+// WebView ~1s after launch, blanking the screen. Keep the build SW-free.
 export default defineConfig({
-  plugins: [
-    react(),
-    VitePWA({
-      // The Android app loads the web over-the-air from Hosting, so the
-      // precaching service worker added no value and a stale precached shell
-      // could leave a blank screen after a deploy. Ship a self-destroying SW
-      // that unregisters itself and clears caches on every device.
-      selfDestroying: true,
-      registerType: 'autoUpdate',
-      manifest: {
-        name: 'ULTRA · תזכורות',
-        short_name: 'ULTRA',
-        description: 'תזכורות חכמות מבוססות זמן ומיקום',
-        theme_color: '#B5651D',
-        background_color: '#fdf6ee',
-        display: 'standalone',
-        orientation: 'portrait',
-        lang: 'he',
-        dir: 'rtl',
-        start_url: '/',
-        icons: [
-          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
-        ],
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-      },
-    }),
-  ],
+  plugins: [react()],
 });
