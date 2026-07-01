@@ -56,10 +56,25 @@ jobs:
           rm -f /tmp/sa.json
           if [ $code -ne 0 ]; then
             if echo "$out" | grep -q "is the current active version"; then
-              echo "::warning::Hosting release retry race — the version is already live; treating as success."
-              exit 0
+              echo "::warning::Hosting release retry race — treating as success; the verify step below is authoritative."
+            else
+              exit $code
             fi
-            exit $code
           fi
         env:
           FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      # Authoritative check: the live site must serve the asset hash we just
+      # built. This turns the ambiguous release step into a verified deploy.
+      - name: Verify hosting is live
+        run: |
+          EXPECTED=$(grep -oE 'assets/index-[A-Za-z0-9_]+\.js' dist/index.html | head -1)
+          echo "expected asset: $EXPECTED"
+          for i in 1 2 3 4 5 6; do
+            LIVE=$(curl -fsS "https://reminder-app-eeb53.web.app/?cb=$RANDOM$i" 2>/dev/null | grep -oE 'assets/index-[A-Za-z0-9_]+\.js' | head -1)
+            echo "live[$i]: $LIVE"
+            if [ "$LIVE" = "$EXPECTED" ]; then echo "✅ hosting serves the new build"; exit 0; fi
+            sleep 8
+          done
+          echo "::error::Hosting is still serving an OLD build ($LIVE) after deploy — expected $EXPECTED. The release did not take effect."
+          exit 1
